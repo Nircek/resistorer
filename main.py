@@ -1,3 +1,5 @@
+import code
+
 class element:
   slots = 0
   def __str__(self):
@@ -80,7 +82,7 @@ class UUIDs:
       for j in s.inputs:
         i += [self.get(j).power]
       s.update(i)
- 
+
 UUIDS = UUIDs()
 in1 = UUIDS.new(element('in1'))
 in2 = UUIDS.new(element('in2'))
@@ -112,4 +114,21 @@ UUIDS.get(in2).power = True
 for i in range(5):
   UUIDS.update()
 print(UUIDS.get(in1).power, UUIDS.get(in2).power, UUIDS.get(orc2).power)
- 
+
+from tkinter import *
+def arc(x,y,r,s,e):
+  global w, tk
+  if e > 360:
+    w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,style=ARC)
+    w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,style=ARC)
+  else:
+    w.create_arc(x-r,y-r,x+r,y+r,start=s,extent=e,style=ARC)
+  tk.update()
+tk = Tk()
+w = Canvas(tk, width=1280, height=720)
+w.pack()
+w.create_line(0,0,1280,720)
+w.create_rectangle(100,100,200,200, fill='red')
+while 1:
+  code.InteractiveConsole(vars()).interact()
+  tk.update()
