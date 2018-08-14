@@ -19,6 +19,27 @@ class element:
   def calc(self):
     return self.power
 
+class ORgate(element):
+  slots = -1
+  def __str__(self):
+    return 'ORgate'
+  def calc(self, ins):
+    for e in ins:
+      if e:
+        return True
+    return False
+  def update(self, ins):
+    self.power = self.calc(ins)
+
+class NOTgate(element):
+  slots = 1
+  def __str__(self):
+    return 'NOTgate'
+  def calc(self, ins):
+    return not ins[0]
+  def update(self, ins):
+    self.power = self.calc(ins)
+
 class UUIDs:
   def __init__(self):
     self.UUIDS = []
@@ -47,4 +68,36 @@ class UUIDs:
       for j in s.inputs:
         i += [self.get(j).power]
       s.update(i)
+ 
+UUIDS = UUIDs()
+in1 = UUIDS.new(element('in1'))
+in2 = UUIDS.new(element('in2'))
+not1 = UUIDS.new(NOTgate('not1', [in1]))
+not2 = UUIDS.new(NOTgate('not2', [in2]))
+orc1 = UUIDS.new(ORgate('orc1', [not1, not2]))
+or1 = UUIDS.new(ORgate('or1', [not1, orc1]))
+or2 = UUIDS.new(ORgate('or2', [not2, orc1]))
+no1 = UUIDS.new(NOTgate('no1', [or1]))
+no2 = UUIDS.new(NOTgate('no2', [or2]))
+orc2 = UUIDS.new(ORgate('orc2', [no1, no2]))
+UUIDS.get(in1).power = False
+UUIDS.get(in2).power = False
+for i in range(5):
+  UUIDS.update()
+print(UUIDS.get(in1).power, UUIDS.get(in2).power, UUIDS.get(orc2).power)
+UUIDS.get(in1).power = False
+UUIDS.get(in2).power = True
+for i in range(5):
+  UUIDS.update()
+print(UUIDS.get(in1).power, UUIDS.get(in2).power, UUIDS.get(orc2).power)
+UUIDS.get(in1).power = True
+UUIDS.get(in2).power = False
+for i in range(5):
+  UUIDS.update()
+print(UUIDS.get(in1).power, UUIDS.get(in2).power, UUIDS.get(orc2).power)
+UUIDS.get(in1).power = True
+UUIDS.get(in2).power = True
+for i in range(5):
+  UUIDS.update()
+print(UUIDS.get(in1).power, UUIDS.get(in2).power, UUIDS.get(orc2).power)
  
