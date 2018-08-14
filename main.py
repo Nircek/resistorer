@@ -19,6 +19,18 @@ class element:
   def calc(self):
     return self.power
 
+class ANDgate(element):
+  slots = -1
+  def __str__(self):
+    return 'ANDgate'
+  def calc(self, ins):
+    for e in ins:
+      if not e:
+        return False
+    return True
+  def update(self, ins):
+    self.power = self.calc(ins)
+
 class ORgate(element):
   slots = -1
   def __str__(self):
