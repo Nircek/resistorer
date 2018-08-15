@@ -70,12 +70,19 @@ class ORgate(element):
 
 class NOTgate(element):
   slots = 1
+  W = 20
+  H = 20
   def __str__(self):
     return 'NOTgate'
   def calc(self, ins):
     return not ins[0]
   def update(self, ins):
     self.power = self.calc(ins)
+  def render(self, g, s='black'):
+    g.w.create_line(self.x, self.y, self.x, self.y+20, fill=s)
+    g.w.create_line(self.x, self.y, self.x+16, self.y+10, fill=s)
+    g.w.create_line(self.x, self.y+20, self.x+16, self.y+10, fill=s)
+    g.arc(self.x+18, self.y+10, 2, 0, 360)
 
 class UUIDs:
   def arc(self,x,y,r,s,e, outline='black'):
@@ -122,15 +129,15 @@ class UUIDs:
 
 UUIDS = UUIDs()
 in1 = UUIDS.new(element(20,50,'in1'))
-in2 = UUIDS.new(element(20,70,'in2'))
+in2 = UUIDS.new(element(20,80,'in2'))
 not1 = UUIDS.new(NOTgate(50,50,'not1', [in1]))
-not2 = UUIDS.new(NOTgate(50,70,'not2', [in2]))
-orc1 = UUIDS.new(ANDgate(80,60,'orc1', [not1, not2]))
+not2 = UUIDS.new(NOTgate(50,80,'not2', [in2]))
+orc1 = UUIDS.new(ANDgate(80,65,'orc1', [not1, not2]))
 or1 = UUIDS.new(ORgate(110,50,'or1', [not1, orc1]))
-or2 = UUIDS.new(ORgate(110,70,'or2', [not2, orc1]))
+or2 = UUIDS.new(ORgate(110,80,'or2', [not2, orc1]))
 no1 = UUIDS.new(NOTgate (140,50,'no1', [or1]))
-no2 = UUIDS.new(NOTgate(140,70,'no2', [or2]))
-orc2 = UUIDS.new(ORgate(170,60,'orc2', [no1, no2]))
+no2 = UUIDS.new(NOTgate(140,80,'no2', [or2]))
+orc2 = UUIDS.new(ORgate(170,65,'orc2', [no1, no2]))
 UUIDS.get(in1).power = False
 UUIDS.get(in2).power = False
 for i in range(5):
