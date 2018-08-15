@@ -9,7 +9,7 @@ class element:
   H = 20
   def __str__(self):
     return 'element'
-  def __init__(self, x, y, name=None, ins=[]):
+  def __init__(self, x, y, name=None, ins=[], s='black'):
     self.addr = super().__repr__().split('0x')[1][:-1]
     self.UUID = -1
     self.updates = 0
@@ -21,14 +21,15 @@ class element:
     self.power = False
     self.x = x
     self.y = y
+    self.s = s
   def update(self, ins):
     self.updates = 0
   def __repr__(self):
     return str(vars(self))
   def calc(self):
     return self.power
-  def render(self, g, s='black'):
-    g.arc(self.x+self.W//2, self.y+self.H//2, min(self.W, self.H)//2, 0, 360, s)
+  def render(self, g):
+    g.arc(self.x+self.W//2, self.y+self.H//2, min(self.W, self.H)//2, 0, 360, self.s)
 
 class ANDgate(element):
   W = 20
@@ -43,11 +44,11 @@ class ANDgate(element):
     return True
   def update(self, ins):
     self.power = self.calc(ins)
-  def render(self, g, s='black'):
-    g.w.create_line(self.x, self.y, self.x+10, self.y, fill=s)
-    g.w.create_line(self.x, self.y, self.x, self.y+20, fill=s)
-    g.w.create_line(self.x, self.y+20, self.x+10, self.y+20, fill=s)
-    g.arc(self.x+10, self.y+10, 10, 270, 180, s)
+  def render(self, g):
+    g.w.create_line(self.x, self.y, self.x+10, self.y, fill=self.s)
+    g.w.create_line(self.x, self.y, self.x, self.y+20, fill=self.s)
+    g.w.create_line(self.x, self.y+20, self.x+10, self.y+20, fill=self.s)
+    g.arc(self.x+10, self.y+10, 10, 270, 180, self.s)
 
 class ORgate(element):
   slots = -1
@@ -62,11 +63,11 @@ class ORgate(element):
     return False
   def update(self, ins):
     self.power = self.calc(ins)
-  def render(self, g, s='black'):
-    g.arc(self.x-10,self.y+10,math.sqrt(200),315,90,s)
-    g.w.create_line(self.x, self.y, self.x+10, self.y, fill=s)
-    g.w.create_line(self.x, self.y+20, self.x+10, self.y+20, fill=s)
-    g.arc(self.x+10,self.y+10,10,270,180,s)
+  def render(self, g):
+    g.arc(self.x-10,self.y+10,math.sqrt(200),315,90,self.s)
+    g.w.create_line(self.x, self.y, self.x+10, self.y, fill=self.s)
+    g.w.create_line(self.x, self.y+20, self.x+10, self.y+20, fill=self.s)
+    g.arc(self.x+10,self.y+10,10,270,180,self.s)
 
 class NOTgate(element):
   slots = 1
@@ -78,11 +79,11 @@ class NOTgate(element):
     return not ins[0]
   def update(self, ins):
     self.power = self.calc(ins)
-  def render(self, g, s='black'):
-    g.w.create_line(self.x, self.y, self.x, self.y+20, fill=s)
-    g.w.create_line(self.x, self.y, self.x+16, self.y+10, fill=s)
-    g.w.create_line(self.x, self.y+20, self.x+16, self.y+10, fill=s)
-    g.arc(self.x+18, self.y+10, 2, 0, 360, s)
+  def render(self, g):
+    g.w.create_line(self.x, self.y, self.x, self.y+20, fill=self.s)
+    g.w.create_line(self.x, self.y, self.x+16, self.y+10, fill=self.s)
+    g.w.create_line(self.x, self.y+20, self.x+16, self.y+10, fill=self.s)
+    g.arc(self.x+18, self.y+10, 2, 0, 360, self.s)
 
 class UUIDs:
   def arc(self,x,y,r,s,e, outline='black'):
@@ -124,7 +125,7 @@ class UUIDs:
       s.update(i)
   def render(self):
     for e in self.UUIDS:
-      e.render(self, 'green')
+      e.render(self)
     self.tk.update()
 
 UUIDS = UUIDs()
