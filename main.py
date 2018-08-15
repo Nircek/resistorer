@@ -1,5 +1,6 @@
 import code
 from tkinter import *
+import math
 
 
 class element:
@@ -30,6 +31,8 @@ class element:
     g.arc(self.x+self.W//2, self.y+self.H//2, min(self.W, self.H)//2, 0, 360, s)
 
 class ANDgate(element):
+  W = 20
+  H = 20
   slots = -1
   def __str__(self):
     return 'ANDgate'
@@ -40,6 +43,11 @@ class ANDgate(element):
     return True
   def update(self, ins):
     self.power = self.calc(ins)
+  def render(self, g, s='black'):
+    g.w.create_line(self.x, self.y, self.x+10, self.y)
+    g.w.create_line(self.x, self.y, self.x, self.y+20)
+    g.w.create_line(self.x, self.y+20, self.x+10, self.y+20)
+    g.arc(self.x+10, self.y+10, 10, 270, 180, s)
 
 class ORgate(element):
   slots = -1
@@ -110,10 +118,10 @@ in1 = UUIDS.new(element(20,50,'in1'))
 in2 = UUIDS.new(element(20,70,'in2'))
 not1 = UUIDS.new(NOTgate(50,50,'not1', [in1]))
 not2 = UUIDS.new(NOTgate(50,70,'not2', [in2]))
-orc1 = UUIDS.new(ORgate(80,60,'orc1', [not1, not2]))
+orc1 = UUIDS.new(ANDgate(80,60,'orc1', [not1, not2]))
 or1 = UUIDS.new(ORgate(110,50,'or1', [not1, orc1]))
 or2 = UUIDS.new(ORgate(110,70,'or2', [not2, orc1]))
-no1 = UUIDS.new(NOTgate(140,50,'no1', [or1]))
+no1 = UUIDS.new(NOTgate (140,50,'no1', [or1]))
 no2 = UUIDS.new(NOTgate(140,70,'no2', [or2]))
 orc2 = UUIDS.new(ORgate(170,60,'orc2', [no1, no2]))
 UUIDS.get(in1).power = False
