@@ -44,13 +44,15 @@ class ANDgate(element):
   def update(self, ins):
     self.power = self.calc(ins)
   def render(self, g, s='black'):
-    g.w.create_line(self.x, self.y, self.x+10, self.y)
-    g.w.create_line(self.x, self.y, self.x, self.y+20)
-    g.w.create_line(self.x, self.y+20, self.x+10, self.y+20)
+    g.w.create_line(self.x, self.y, self.x+10, self.y, fill=s)
+    g.w.create_line(self.x, self.y, self.x, self.y+20, fill=s)
+    g.w.create_line(self.x, self.y+20, self.x+10, self.y+20, fill=s)
     g.arc(self.x+10, self.y+10, 10, 270, 180, s)
 
 class ORgate(element):
   slots = -1
+  W = 20
+  H = 20
   def __str__(self):
     return 'ORgate'
   def calc(self, ins):
@@ -60,6 +62,11 @@ class ORgate(element):
     return False
   def update(self, ins):
     self.power = self.calc(ins)
+  def render(self, g, s='black'):
+    g.arc(self.x-10,self.y+10,math.sqrt(200),315,90,s)
+    g.w.create_line(self.x, self.y, self.x+10, self.y, fill=s)
+    g.w.create_line(self.x, self.y+20, self.x+10, self.y+20, fill=s)
+    g.arc(self.x+10,self.y+10,10,270,180,s)
 
 class NOTgate(element):
   slots = 1
