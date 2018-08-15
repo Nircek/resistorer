@@ -5,8 +5,8 @@ import math
 
 class element:
   slots = 0
-  W = 20
-  H = 20
+  W = 40
+  H = 40
   def __str__(self):
     return 'element'
   def __init__(self, x, y, name=None, ins=[], s='black'):
@@ -32,8 +32,8 @@ class element:
     g.arc(self.x+self.W//2, self.y+self.H//2, min(self.W, self.H)//2, 0, 360, self.s)
 
 class ANDgate(element):
-  W = 20
-  H = 20
+  W = 40
+  H = 40
   slots = -1
   def __str__(self):
     return 'ANDgate'
@@ -45,15 +45,15 @@ class ANDgate(element):
   def update(self, ins):
     self.power = self.calc(ins)
   def render(self, g):
-    g.w.create_line(self.x, self.y, self.x+10, self.y, fill=self.s)
-    g.w.create_line(self.x, self.y, self.x, self.y+20, fill=self.s)
-    g.w.create_line(self.x, self.y+20, self.x+10, self.y+20, fill=self.s)
-    g.arc(self.x+10, self.y+10, 10, 270, 180, self.s)
+    g.w.create_line(self.x, self.y, self.x+20, self.y, fill=self.s)
+    g.w.create_line(self.x, self.y, self.x, self.y+40, fill=self.s)
+    g.w.create_line(self.x, self.y+40, self.x+20, self.y+40, fill=self.s)
+    g.arc(self.x+20, self.y+20, 20, 270, 180, self.s)
 
 class ORgate(element):
   slots = -1
-  W = 20
-  H = 20
+  W = 40
+  H = 40
   def __str__(self):
     return 'ORgate'
   def calc(self, ins):
@@ -64,15 +64,15 @@ class ORgate(element):
   def update(self, ins):
     self.power = self.calc(ins)
   def render(self, g):
-    g.arc(self.x-10,self.y+10,math.sqrt(200),315,90,self.s)
-    g.w.create_line(self.x, self.y, self.x+10, self.y, fill=self.s)
-    g.w.create_line(self.x, self.y+20, self.x+10, self.y+20, fill=self.s)
-    g.arc(self.x+10,self.y+10,10,270,180,self.s)
+    g.arc(self.x-20,self.y+20,math.sqrt(2*20**2),315,90,self.s)
+    g.w.create_line(self.x, self.y, self.x+20, self.y, fill=self.s)
+    g.w.create_line(self.x, self.y+40, self.x+20, self.y+40, fill=self.s)
+    g.arc(self.x+20,self.y+20,20,270,180,self.s)
 
 class NOTgate(element):
   slots = 1
-  W = 20
-  H = 20
+  W = 40
+  H = 40
   def __str__(self):
     return 'NOTgate'
   def calc(self, ins):
@@ -80,10 +80,10 @@ class NOTgate(element):
   def update(self, ins):
     self.power = self.calc(ins)
   def render(self, g):
-    g.w.create_line(self.x, self.y, self.x, self.y+20, fill=self.s)
-    g.w.create_line(self.x, self.y, self.x+16, self.y+10, fill=self.s)
-    g.w.create_line(self.x, self.y+20, self.x+16, self.y+10, fill=self.s)
-    g.arc(self.x+18, self.y+10, 2, 0, 360, self.s)
+    g.w.create_line(self.x, self.y, self.x, self.y+40, fill=self.s)
+    g.w.create_line(self.x, self.y, self.x+32, self.y+20, fill=self.s)
+    g.w.create_line(self.x, self.y+40, self.x+32, self.y+20, fill=self.s)
+    g.arc(self.x+36, self.y+20, 4, 0, 360, self.s)
 
 class UUIDs:
   def arc(self,x,y,r,s,e, outline='black'):
@@ -97,7 +97,7 @@ class UUIDs:
     self.UUIDS = []
     self.UUIDi = -1
     self.tk = Tk()
-    self.w = Canvas(self.tk)
+    self.w = Canvas(self.tk, width=WIDTH, height=HEIGHT)
     self.w.pack()
   def get(self, x):
     for e in self.UUIDS:
@@ -129,16 +129,17 @@ class UUIDs:
     self.tk.update()
 
 UUIDS = UUIDs()
-in1 = UUIDS.new(element(20,50,'in1'))
-in2 = UUIDS.new(element(20,80,'in2'))
-not1 = UUIDS.new(NOTgate(50,50,'not1', [in1]))
-not2 = UUIDS.new(NOTgate(50,80,'not2', [in2]))
-orc1 = UUIDS.new(ANDgate(80,65,'orc1', [not1, not2]))
-or1 = UUIDS.new(ORgate(110,50,'or1', [not1, orc1]))
-or2 = UUIDS.new(ORgate(110,80,'or2', [not2, orc1]))
-no1 = UUIDS.new(NOTgate (140,50,'no1', [or1]))
-no2 = UUIDS.new(NOTgate(140,80,'no2', [or2]))
-orc2 = UUIDS.new(ORgate(170,65,'orc2', [no1, no2]))
+s = 50
+in1 = UUIDS.new(element(s,s,'in1'))
+in2 = UUIDS.new(element(s,2*s,'in2'))
+not1 = UUIDS.new(NOTgate(2*s,s,'not1', [in1]))
+not2 = UUIDS.new(NOTgate(2*s,2*s,'not2', [in2]))
+orc1 = UUIDS.new(ANDgate(3*s,1.5*s,'orc1', [not1, not2]))
+or1 = UUIDS.new(ORgate(4*s,s,'or1', [not1, orc1]))
+or2 = UUIDS.new(ORgate(4*s,2*s,'or2', [not2, orc1]))
+no1 = UUIDS.new(NOTgate (5*s,s,'no1', [or1]))
+no2 = UUIDS.new(NOTgate(5*s,2*s,'no2', [or2]))
+orc2 = UUIDS.new(ORgate(6*s,1.5*s,'orc2', [no1, no2]))
 UUIDS.get(in1).power = False
 UUIDS.get(in2).power = False
 for i in range(5):
