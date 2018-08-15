@@ -82,7 +82,7 @@ class NOTgate(element):
     g.w.create_line(self.x, self.y, self.x, self.y+20, fill=s)
     g.w.create_line(self.x, self.y, self.x+16, self.y+10, fill=s)
     g.w.create_line(self.x, self.y+20, self.x+16, self.y+10, fill=s)
-    g.arc(self.x+18, self.y+10, 2, 0, 360)
+    g.arc(self.x+18, self.y+10, 2, 0, 360, s)
 
 class UUIDs:
   def arc(self,x,y,r,s,e, outline='black'):
@@ -90,7 +90,7 @@ class UUIDs:
       self.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,style=ARC,outline=outline)
       self.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,style=ARC,outline=outline)
     else:
-      self.w.create_arc(x-r,y-r,x+r,y+r,start=s,extent=e,style=ARC)
+      self.w.create_arc(x-r,y-r,x+r,y+r,start=s,extent=e,style=ARC, outline=outline)
     
   def __init__(self, WIDTH=1280, HEIGHT=720):
     self.UUIDS = []
@@ -124,7 +124,7 @@ class UUIDs:
       s.update(i)
   def render(self):
     for e in self.UUIDS:
-      e.render(self)
+      e.render(self, 'green')
     self.tk.update()
 
 UUIDS = UUIDs()
@@ -158,5 +158,6 @@ UUIDS.get(in2).power = True
 for i in range(5):
   UUIDS.update()
 print(UUIDS.get(in1).power, UUIDS.get(in2).power, UUIDS.get(orc2).power)
-UUIDS.render()
+while 1:
+  UUIDS.render()
 code.InteractiveConsole(vars()).interact()
