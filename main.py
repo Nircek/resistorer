@@ -1,10 +1,14 @@
 import code
+from tkinter import *
+
 
 class element:
   slots = 0
+  W = 20
+  H = 20
   def __str__(self):
     return 'element'
-  def __init__(self, name=None, ins=[]):
+  def __init__(self, x, y, name=None, ins=[]):
     self.addr = super().__repr__().split('0x')[1][:-1]
     self.UUID = -1
     self.updates = 0
@@ -14,12 +18,16 @@ class element:
       self.name = name
     self.inputs = ins
     self.power = False
+    self.x = x
+    self.y = y
   def update(self, ins):
     self.updates = 0
   def __repr__(self):
     return str(vars(self))
   def calc(self):
     return self.power
+  def render(self, g, s='black'):
+    g.arc(self.x+self.W//2, self.y+self.H//2, min(self.W, self.H)//2, 0, 360, s)
 
 class ANDgate(element):
   slots = -1
@@ -55,9 +63,19 @@ class NOTgate(element):
     self.power = self.calc(ins)
 
 class UUIDs:
-  def __init__(self):
+  def arc(self,x,y,r,s,e, outline='black'):
+    if e >= 360:
+      self.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,style=ARC,outline=outline)
+      self.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,style=ARC,outline=outline)
+    else:
+      self.w.create_arc(x-r,y-r,x+r,y+r,start=s,extent=e,style=ARC)
+    
+  def __init__(self, WIDTH=1280, HEIGHT=720):
     self.UUIDS = []
     self.UUIDi = -1
+    self.tk = Tk()
+    self.w = Canvas(self.tk)
+    self.w.pack()
   def get(self, x):
     for e in self.UUIDS:
       if e.UUID == x:
@@ -82,18 +100,22 @@ class UUIDs:
       for j in s.inputs:
         i += [self.get(j).power]
       s.update(i)
+  def render(self):
+    for e in self.UUIDS:
+      e.render(self)
+    self.tk.update()
 
 UUIDS = UUIDs()
-in1 = UUIDS.new(element('in1'))
-in2 = UUIDS.new(element('in2'))
-not1 = UUIDS.new(NOTgate('not1', [in1]))
-not2 = UUIDS.new(NOTgate('not2', [in2]))
-orc1 = UUIDS.new(ORgate('orc1', [not1, not2]))
-or1 = UUIDS.new(ORgate('or1', [not1, orc1]))
-or2 = UUIDS.new(ORgate('or2', [not2, orc1]))
-no1 = UUIDS.new(NOTgate('no1', [or1]))
-no2 = UUIDS.new(NOTgate('no2', [or2]))
-orc2 = UUIDS.new(ORgate('orc2', [no1, no2]))
+in1 = UUIDS.new(element(20,50,'in1'))
+in2 = UUIDS.new(element(20,70,'in2'))
+not1 = UUIDS.new(NOTgate(50,50,'not1', [in1]))
+not2 = UUIDS.new(NOTgate(50,70,'not2', [in2]))
+orc1 = UUIDS.new(ORgate(80,60,'orc1', [not1, not2]))
+or1 = UUIDS.new(ORgate(110,50,'or1', [not1, orc1]))
+or2 = UUIDS.new(ORgate(110,70,'or2', [not2, orc1]))
+no1 = UUIDS.new(NOTgate(140,50,'no1', [or1]))
+no2 = UUIDS.new(NOTgate(140,70,'no2', [or2]))
+orc2 = UUIDS.new(ORgate(170,60,'orc2', [no1, no2]))
 UUIDS.get(in1).power = False
 UUIDS.get(in2).power = False
 for i in range(5):
@@ -114,21 +136,5 @@ UUIDS.get(in2).power = True
 for i in range(5):
   UUIDS.update()
 print(UUIDS.get(in1).power, UUIDS.get(in2).power, UUIDS.get(orc2).power)
-
-from tkinter import *
-def arc(x,y,r,s,e):
-  global w, tk
-  if e > 360:
-    w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,style=ARC)
-    w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,style=ARC)
-  else:
-    w.create_arc(x-r,y-r,x+r,y+r,start=s,extent=e,style=ARC)
-  tk.update()
-tk = Tk()
-w = Canvas(tk, width=1280, height=720)
-w.pack()
-w.create_line(0,0,1280,720)
-w.create_rectangle(100,100,200,200, fill='red')
-while 1:
-  code.InteractiveConsole(vars()).interact()
-  tk.update()
+UUIDS.render()
+code.InteractiveConsole(vars()).interact()
