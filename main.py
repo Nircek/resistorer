@@ -5,8 +5,8 @@ import math
 
 class element:
   slots = 0
-  W = 40
-  H = 40
+  W = 10
+  H = 10
   def __str__(self):
     return 'element'
   def __init__(self, x, y, name=None, ins=[], s='black'):
@@ -32,6 +32,14 @@ class element:
     g.arc(self.x+self.W//2, self.y+self.H//2, min(self.W, self.H)//2, 0, 360, self.s)
   def xy(self):
     return (self.x+self.W//2, self.y+self.H//2)
+
+
+class switch(element):
+  slots = 0
+  W = 40
+  H = 40
+  def __str__(self):
+    return 'switch'
 
 class ANDgate(element):
   W = 40
@@ -169,8 +177,8 @@ class UUIDs:
 
 UUIDS = UUIDs()
 s = 70
-in1 = UUIDS.new(element(s,s,'in1'))
-in2 = UUIDS.new(element(s,2*s,'in2'))
+in1 = UUIDS.new(switch(s,s,'in1'))
+in2 = UUIDS.new(switch(s,2*s,'in2'))
 not1 = UUIDS.new(NOTgate(2*s,s,'not1', [in1]))
 not2 = UUIDS.new(NOTgate(2*s,2*s,'not2', [in2]))
 orc1 = UUIDS.new(ORgate(3*s,1.5*s,'orc1', [not1, not2]))
