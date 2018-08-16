@@ -30,6 +30,8 @@ class element:
     return self.power
   def render(self, g):
     g.arc(self.x+self.W//2, self.y+self.H//2, min(self.W, self.H)//2, 0, 360, self.s)
+  def xy(self):
+    return (self.x+self.W//2, self.y+self.H//2)
 
 class ANDgate(element):
   W = 40
@@ -49,6 +51,11 @@ class ANDgate(element):
     g.w.create_line(self.x, self.y, self.x, self.y+40, fill=self.s)
     g.w.create_line(self.x, self.y+40, self.x+20, self.y+40, fill=self.s)
     g.arc(self.x+20, self.y+20, 20, 270, 180, self.s)
+    for i in range(len(self.inputs)):
+      j = 40*(i+1)/(len(self.inputs)+1)
+      g.w.create_line(self.x, self.y+j, self.x-10, self.y+j, fill=self.s)
+  def xy(self):
+    return (self.x+self.W//2, self.y+self.H//2)
 
 class ORgate(element):
   slots = -1
@@ -68,6 +75,10 @@ class ORgate(element):
     g.w.create_line(self.x, self.y, self.x+20, self.y, fill=self.s)
     g.w.create_line(self.x, self.y+40, self.x+20, self.y+40, fill=self.s)
     g.arc(self.x+20,self.y+20,20,270,180,self.s)
+    for i in range(len(self.inputs)):
+      j = 40*(i+1)/(len(self.inputs)+1)
+      k = math.sqrt(20**2*2-(j-20)**2)-20
+      g.w.create_line(self.x+k, self.y+j, self.x-10, self.y+j, fill=self.s)
 
 class NOTgate(element):
   slots = 1
@@ -84,6 +95,7 @@ class NOTgate(element):
     g.w.create_line(self.x, self.y, self.x+32, self.y+20, fill=self.s)
     g.w.create_line(self.x, self.y+40, self.x+32, self.y+20, fill=self.s)
     g.arc(self.x+36, self.y+20, 4, 0, 360, self.s)
+    g.w.create_line(self.x, self.y+20, self.x-10, self.y+20, fill=self.s)
 
 class UUIDs:
   def arc(self,x,y,r,s,e, outline='black'):
@@ -136,7 +148,7 @@ not1 = UUIDS.new(NOTgate(2*s,s,'not1', [in1]))
 not2 = UUIDS.new(NOTgate(2*s,2*s,'not2', [in2]))
 orc1 = UUIDS.new(ANDgate(3*s,1.5*s,'orc1', [not1, not2]))
 or1 = UUIDS.new(ORgate(4*s,s,'or1', [not1, orc1]))
-or2 = UUIDS.new(ORgate(4*s,2*s,'or2', [not2, orc1]))
+or2 = UUIDS.new(ORgate(4*s,2*s,'or2', [not2, orc1, in1]))
 no1 = UUIDS.new(NOTgate (5*s,s,'no1', [or1]))
 no2 = UUIDS.new(NOTgate(5*s,2*s,'no2', [or2]))
 orc2 = UUIDS.new(ORgate(6*s,1.5*s,'orc2', [no1, no2]))
