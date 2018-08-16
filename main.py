@@ -53,9 +53,10 @@ class ANDgate(element):
     g.arc(self.x+20, self.y+20, 20, 270, 180, self.s)
     for i in range(len(self.inputs)):
       j = 40*(i+1)/(len(self.inputs)+1)
-      g.w.create_line(self.x, self.y+j, self.x-10, self.y+j, fill=self.s)
+      pc = g.getPowerColor(self.inputs[i], self.UUID)
+      g.w.create_line(self.x, self.y+j, self.x-10, self.y+j, fill=pc)
       x, y = g.get(self.inputs[i]).xy()
-      g.w.create_line(x, y, self.x-10, self.y+j, fill=g.getPowerColor(self.inputs[i], self.UUID))
+      g.w.create_line(x, y, self.x-10, self.y+j, fill=pc)
   def xy(self):
     return (self.x+self.W, self.y+self.H//2)
 
@@ -80,9 +81,10 @@ class ORgate(element):
     for i in range(len(self.inputs)):
       j = 40*(i+1)/(len(self.inputs)+1)
       k = math.sqrt(20**2*2-(j-20)**2)-20
-      g.w.create_line(self.x+k, self.y+j, self.x-10, self.y+j, fill=self.s)
+      pc = g.getPowerColor(self.inputs[i], self.UUID)
+      g.w.create_line(self.x+k, self.y+j, self.x-10, self.y+j, fill=pc)
       x, y = g.get(self.inputs[i]).xy()
-      g.w.create_line(x, y, self.x-10, self.y+j, fill=g.getPowerColor(self.inputs[i], self.UUID))
+      g.w.create_line(x, y, self.x-10, self.y+j, fill=pc)
   def xy(self):
     return (self.x+self.W, self.y+self.H//2)
 
@@ -101,9 +103,10 @@ class NOTgate(element):
     g.w.create_line(self.x, self.y, self.x+32, self.y+20, fill=self.s)
     g.w.create_line(self.x, self.y+40, self.x+32, self.y+20, fill=self.s)
     g.arc(self.x+36, self.y+20, 4, 0, 360, self.s)
-    g.w.create_line(self.x, self.y+20, self.x-10, self.y+20, fill=self.s)
+    pc = g.getPowerColor(self.inputs[0], self.UUID)
+    g.w.create_line(self.x, self.y+20, self.x-10, self.y+20, fill=pc)
     x, y = g.get(self.inputs[0]).xy()
-    g.w.create_line(x, y, self.x, self.y+20, fill=g.getPowerColor(self.inputs[0], self.UUID))
+    g.w.create_line(x, y, self.x, self.y+20, fill=pc)
   def xy(self):
     return (self.x+self.W, self.y+self.H//2)
 
@@ -139,26 +142,26 @@ class UUIDs:
     x.UUID = int(self.UUIDi)
     self.UUIDS += [x]
     return self.UUIDi
-  def update(self, x=None):
+  def update(self, upd=False, x=None):
     if x is None:
       for i in range(len(self.UUIDS)):
         tt = False
         for e in self.UUIDS:
           t = self.get(e.UUID).power
-          self.update(e.UUID)
+          self.update(upd, e.UUID)
           if self.get(e.UUID).power != t:
             tt = True
+            if upd:
+              UUIDS.render()
         if not tt:
           break
-      self.tk.update()
-      input()
+        print(i)
     else:
       s = self.get(x)
       i = []
       for j in s.inputs:
         i += [self.get(j).power]
       s.update(i)
-      UUIDS.render()
   def render(self):
     for e in self.UUIDS:
       e.render(self)
@@ -170,29 +173,19 @@ in1 = UUIDS.new(element(s,s,'in1'))
 in2 = UUIDS.new(element(s,2*s,'in2'))
 not1 = UUIDS.new(NOTgate(2*s,s,'not1', [in1]))
 not2 = UUIDS.new(NOTgate(2*s,2*s,'not2', [in2]))
-orc1 = UUIDS.new(ANDgate(3*s,1.5*s,'orc1', [not1, not2]))
+orc1 = UUIDS.new(ORgate(3*s,1.5*s,'orc1', [not1, not2]))
 or1 = UUIDS.new(ORgate(4*s,s,'or1', [not1, orc1]))
 or2 = UUIDS.new(ORgate(4*s,2*s,'or2', [orc1, not2]))
 no1 = UUIDS.new(NOTgate (5*s,s,'no1', [or1]))
 no2 = UUIDS.new(NOTgate(5*s,2*s,'no2', [or2]))
 orc2 = UUIDS.new(ORgate(6*s,1.5*s,'orc2', [no1, no2]))
+i = 0
 while 1:
-  UUIDS.get(in1).power = False
-  UUIDS.get(in2).power = False
+  UUIDS.get(in1).power = (i//2)%2 != 0
+  UUIDS.get(in2).power = i%2 != 0
   UUIDS.update()
   print(UUIDS.get(in1).power, UUIDS.get(in2).power, UUIDS.get(orc2).power)
-  UUIDS.get(in1).power = False
-  UUIDS.get(in2).power = True
-  UUIDS.update()
-  print(UUIDS.get(in1).power, UUIDS.get(in2).power, UUIDS.get(orc2).power)
-  UUIDS.get(in1).power = True
-  UUIDS.get(in2).power = False
-  UUIDS.update()
-  print(UUIDS.get(in1).power, UUIDS.get(in2).power, UUIDS.get(orc2).power)
-  UUIDS.get(in1).power = True
-  UUIDS.get(in2).power = True
-  UUIDS.update()
-  print(UUIDS.get(in1).power, UUIDS.get(in2).power, UUIDS.get(orc2).power)
-while 1:
   UUIDS.render()
+  input()
+  i += 1
 code.InteractiveConsole(vars()).interact()
