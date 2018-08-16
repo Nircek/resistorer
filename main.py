@@ -22,11 +22,12 @@ class element:
     self.x = x
     self.y = y
     self.s = s
-  def update(self, ins):
-    self.updates = 0
+  def update(self, ins=[]):
+    self.power = self.calc(ins)
+    self.updates += 1
   def __repr__(self):
     return str(vars(self))
-  def calc(self):
+  def calc(self, ins=[]):
     return self.power
   def render(self, g):
     g.arc(self.x+self.W//2, self.y+self.H//2, min(self.W, self.H)//2, 0, 360, self.s)
@@ -52,8 +53,6 @@ class ANDgate(element):
       if not e:
         return False
     return True
-  def update(self, ins):
-    self.power = self.calc(ins)
   def render(self, g):
     g.w.create_line(self.x, self.y, self.x+20, self.y, fill=self.s)
     g.w.create_line(self.x, self.y, self.x, self.y+40, fill=self.s)
@@ -79,8 +78,6 @@ class ORgate(element):
       if e:
         return True
     return False
-  def update(self, ins):
-    self.power = self.calc(ins)
   def render(self, g):
     g.arc(self.x-20,self.y+20,math.sqrt(2*20**2),315,90,self.s)
     g.w.create_line(self.x, self.y, self.x+20, self.y, fill=self.s)
@@ -104,8 +101,6 @@ class NOTgate(element):
     return 'NOTgate'
   def calc(self, ins):
     return not ins[0]
-  def update(self, ins):
-    self.power = self.calc(ins)
   def render(self, g):
     g.w.create_line(self.x, self.y, self.x, self.y+40, fill=self.s)
     g.w.create_line(self.x, self.y, self.x+32, self.y+20, fill=self.s)
@@ -114,7 +109,7 @@ class NOTgate(element):
     pc = g.getPowerColor(self.inputs[0], self.UUID)
     g.w.create_line(self.x, self.y+20, self.x-10, self.y+20, fill=pc)
     x, y = g.get(self.inputs[0]).xy()
-    g.w.create_line(x, y, self.x, self.y+20, fill=pc)
+    g.w.create_line(x, y, self.x-9, self.y+20, fill=pc)
   def xy(self):
     return (self.x+self.W, self.y+self.H//2)
 
