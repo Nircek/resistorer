@@ -9,7 +9,7 @@ class element:
   H = 10
   def __str__(self):
     return 'element'
-  def __init__(self, x=0, y=0, name=None, ins=[], s='black'):
+  def __init__(self, x=0, y=0, name=None, ins=None, s='black'):
     self.addr = super().__repr__().split('0x')[1][:-1]
     self.UUID = -1
     self.updates = 0
@@ -18,7 +18,10 @@ class element:
       self.name = self.__str__()
     else:
       self.name = name
-    self.inputs = ins
+    if ins is None:
+      self.inputs = []
+    else:
+      self.inputs = ins
     self.power = False
     self.x = x
     self.y = y
@@ -42,6 +45,7 @@ class element:
   def onkey(self, ev):
     if  ev.x >= self.x and ev.x <= self.x+self.W \
     and ev.y >= self.y and ev.y <= self.y+self.H:
+      print(self.UUID)
       if ev.keycode == ord('D'):
         self.inputs = []
       elif ev.keycode == ord('I'):
@@ -215,6 +219,9 @@ class UUIDs:
       gates = {1:NOTgate, 2:ORgate, 3:ANDgate}
       b = gates[ev.keycode-111]
       self.new(b(ev.x-b.W//2, ev.y-b.H//2))
+    if ev.keycode == 220:
+      code.InteractiveConsole(vars()).interact()
+      
     for e in self.UUIDS:
       e.onkey(ev)
 
