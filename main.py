@@ -214,6 +214,7 @@ class UUIDs:
     return self.UUIDi
   def update(self, upd=False, x=None):
     if x is None:
+      tt = False
       for i in range(len(self.UUIDS)):
         tt = False
         for e in self.UUIDS:
@@ -256,6 +257,9 @@ class UUIDs:
       self.new(b, ev.x-b.W//2, ev.y-b.H//2)
     if ev.keycode == 220:
       code.InteractiveConsole(vars()).interact()
+    if ev.state == 0x40001:
+      self.UUIDS = []
+      self.UUIDi = 0
     for e in self.UUIDS:
       e.onkey(ev)
 
