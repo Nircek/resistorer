@@ -23,6 +23,8 @@ class element:
     self.x = x
     self.y = y
     self.s = s
+  def getsize(self):
+    return self.W, self.H
   def update(self, ins=[]):
     self.power = self.calc(ins)
     self.updates += 1
@@ -208,6 +210,11 @@ class UUIDs:
     for e in self.UUIDS:
       e.onclick2(ev.x, ev.y)
   def onkey(self, ev):
+    print(ev)
+    if ev.keycode > 111 and ev.keycode < 111+13:
+      gates = {1:NOTgate, 2:ORgate, 3:ANDgate}
+      b = gates[ev.keycode-111]
+      self.new(b(ev.x-b.W//2, ev.y-b.H//2))
     for e in self.UUIDS:
       e.onkey(ev)
 
@@ -230,6 +237,7 @@ while 1:
   UUIDS.update()
   print(UUIDS.get(in1).power, UUIDS.get(in2).power, UUIDS.get(orc2).power)
   UUIDS.render()
-  #input()
   i += 1
+  for j in range(2**20):
+    pass
 code.InteractiveConsole(vars()).interact()
