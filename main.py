@@ -79,6 +79,11 @@ class switch(element):
     return 'switch'
   def onclick2(self):
     self.power = not self.power
+  def render(self):
+    s = self.s
+    if s == 'black' and self.power:
+      s = 'red'
+    self.parent.arc(self.x+self.W//2, self.y+self.H//2, min(self.W, self.H)//2, 0, 360, s)
 
 class ANDgate(element):
   W = 40
@@ -246,7 +251,7 @@ class UUIDs:
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
-      gates = {1:NOTgate, 2:ORgate, 3:ANDgate}
+      gates = {1:switch, 2:NOTgate, 3:ORgate, 4:ANDgate}
       b = gates[ev.keycode-111]
       self.new(b, ev.x-b.W//2, ev.y-b.H//2)
     if ev.keycode == 220:
