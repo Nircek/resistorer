@@ -36,6 +36,11 @@ class element:
     if  x >= self.x and x <= self.x+self.W \
     and y >= self.y and y <= self.y+self.H:
       self.s = 'green'
+  def onkey(self, ev):
+    if  ev.x >= self.x and ev.x <= self.x+self.W \
+    and ev.y >= self.y and ev.y <= self.y+self.H:
+      if ev.keycode == ord('D'):
+        self.inputs = []
   def __repr__(self):
     return str(vars(self))
   def calc(self, ins=[]):
@@ -111,7 +116,10 @@ class NOTgate(element):
   def __str__(self):
     return 'NOTgate'
   def calc(self, ins):
-    return not ins[0]
+    if len(ins) < self.slots:
+      return not False
+    else:
+      return not ins[0]
   def render(self, g):
     g.w.create_line(self.x, self.y, self.x, self.y+40, fill=self.s)
     g.w.create_line(self.x, self.y, self.x+32, self.y+20, fill=self.s)
@@ -143,7 +151,9 @@ class UUIDs:
     self.w = Canvas(self.tk, width=WIDTH, height=HEIGHT)
     self.w.bind('<Button 1>',self.onclick1)
     self.w.bind('<Button 3>',self.onclick2)
+    self.w.bind('<KeyPress>',self.onkey)
     self.w.pack()
+    self.w.focus_set()
   def get(self, x):
     for e in self.UUIDS:
       if e.UUID == x:
@@ -179,6 +189,7 @@ class UUIDs:
         i += [self.get(j).power]
       s.update(i)
   def render(self):
+    self.w.delete('all')
     for e in self.UUIDS:
       e.render(self)
     self.tk.update()
@@ -188,6 +199,9 @@ class UUIDs:
   def onclick2(self, ev):
     for e in self.UUIDS:
       e.onclick2(ev.x, ev.y)
+  def onkey(self, ev):
+    for e in self.UUIDS:
+      e.onkey(ev)
 
 UUIDS = UUIDs()
 s = 70
