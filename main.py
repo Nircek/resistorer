@@ -9,11 +9,11 @@ class element:
   H = 10
   def __str__(self):
     return 'element'
-  def __init__(self, x=0, y=0, name=None, ins=None, s='black'):
+  def __init__(self, parent, x, y, name=None, ins=None, s='black'):
     self.addr = super().__repr__().split('0x')[1][:-1]
     self.UUID = -1
     self.updates = 0
-    self.parent = None
+    self.parent = parent
     if name is None:
       self.name = self.__str__()
     else:
@@ -22,10 +22,13 @@ class element:
       self.inputs = []
     else:
       self.inputs = ins
+    for e in self.inputs:
+      self.parent.get(e).outs += [self]
     self.power = False
     self.x = x
     self.y = y
     self.s = s
+    self.outs = []
   def getsize(self):
     return self.W, self.H
   def update(self, ins=[]):
@@ -52,6 +55,16 @@ class element:
         self.parent.g_input = self.UUID
       elif ev.keycode == ord('O') and hasattr(self.parent, 'g_input'):
         self.inputs += [self.parent.g_input]
+        self.parent.get(self.parent.g_input).outs += [self]
+      elif ev.keycode == 46:
+        for e in self.outs:
+          i=0
+          while i < len(e.inputs):
+            if e.inputs[i] == self.UUID:
+              del e.inputs[i]
+            else:
+              i += 1
+        self.parent.rm(self.UUID)
   def __repr__(self):
     return str(vars(self))
   def calc(self, ins=[]):
@@ -171,7 +184,22 @@ class UUIDs:
       if e.UUID == x:
         return e
     return None
-  def new(self, x=None):
+  def rm(self, x):
+    i = 0
+    while i < len(self.UUIDS):
+      if self.UUIDS[i].UUID == x:
+        del self.UUIDS[i]
+      else:
+        i += 1
+  def new(self, c, x, y, ins=None):
+    e = c(self, x, y, ins=ins)
+    self.UUIDi += 1
+    while self.get(self.UUIDi) is not None:
+      self.UUIDi += 1
+    e.UUID = int(self.UUIDi)
+    self.UUIDS += [e]
+    return self.UUIDi
+  def add(self, x=None): # deprecated because x must have parent
     if x is None:
       x = element()
     x.parent = self
@@ -227,16 +255,16 @@ class UUIDs:
 
 UUIDS = UUIDs()
 s = 70
-in1 = UUIDS.new(switch(s,s,'in1'))
-in2 = UUIDS.new(switch(s,2*s,'in2'))
-not1 = UUIDS.new(NOTgate(2*s,s,'not1', [in1]))
-not2 = UUIDS.new(NOTgate(2*s,2*s,'not2', [in2]))
-orc1 = UUIDS.new(ORgate(3*s,1.5*s,'orc1', [not1, not2]))
-or1 = UUIDS.new(ORgate(4*s,s,'or1', [not1, orc1]))
-or2 = UUIDS.new(ORgate(4*s,2*s,'or2', [orc1, not2]))
-no1 = UUIDS.new(NOTgate (5*s,s,'no1', [or1]))
-no2 = UUIDS.new(NOTgate(5*s,2*s,'no2', [or2]))
-orc2 = UUIDS.new(ORgate(6*s,1.5*s,'orc2', [no1, no2]))
+in1 = UUIDS.new(switch,s,s)
+in2 = UUIDS.new(switch,s,2*s)
+not1 = UUIDS.new(NOTgate,2*s,s,[in1])
+not2 = UUIDS.new(NOTgate,2*s,2*s,[in2])
+orc1 = UUIDS.new(ORgate,3*s,1.5*s,[not1, not2])
+or1 = UUIDS.new(ORgate,4*s,s,[not1, orc1])
+or2 = UUIDS.new(ORgate,4*s,2*s,[orc1, not2])
+no1 = UUIDS.new(NOTgate,5*s,s,[or1])
+no2 = UUIDS.new(NOTgate,5*s,2*s,[or2])
+orc2 = UUIDS.new(ORgate,6*s,1.5*s,[no1, no2])
 i = 0
 while 1:
   UUIDS.get(in1).power = (i//2)%2 != 0
