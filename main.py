@@ -34,16 +34,12 @@ class element:
   def update(self, ins=[]):
     self.power = self.calc(ins)
     self.updates += 1
-  def onclick1(self, x, y):
-    if  x >= self.x and x <= self.x+self.W \
-    and y >= self.y and y <= self.y+self.H:
-      if self.s == 'black':
-        self.s = 'orange'
-      else:
-        self.s = 'black'
-  def onclick2(self, x, y):
-    if  x >= self.x and x <= self.x+self.W \
-    and y >= self.y and y <= self.y+self.H:
+  def onclick1(self):
+    if self.s == 'black':
+      self.s = 'orange'
+    else:
+      self.s = 'black'
+  def onclick2(self):
       self.s = 'green'
   def onkey(self, ev):
     if  ev.x >= self.x and ev.x <= self.x+self.W \
@@ -81,6 +77,8 @@ class switch(element):
   H = 40
   def __str__(self):
     return 'switch'
+  def onclick2(self):
+    self.power = not self.power
 
 class ANDgate(element):
   W = 40
@@ -237,19 +235,22 @@ class UUIDs:
     self.tk.update()
   def onclick1(self, ev):
     for e in self.UUIDS:
-      e.onclick1(ev.x, ev.y)
+      if  ev.x >= e.x and ev.x <= e.x+e.W \
+      and ev.y >= e.y and ev.y <= e.y+e.H:
+        e.onclick1()
   def onclick2(self, ev):
     for e in self.UUIDS:
-      e.onclick2(ev.x, ev.y)
+      if  ev.x >= e.x and ev.x <= e.x+e.W \
+      and ev.y >= e.y and ev.y <= e.y+e.H:
+        e.onclick2()
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
       gates = {1:NOTgate, 2:ORgate, 3:ANDgate}
       b = gates[ev.keycode-111]
-      self.new(b(ev.x-b.W//2, ev.y-b.H//2))
+      self.new(b, ev.x-b.W//2, ev.y-b.H//2)
     if ev.keycode == 220:
       code.InteractiveConsole(vars()).interact()
-      
     for e in self.UUIDS:
       e.onkey(ev)
 
@@ -267,12 +268,7 @@ no2 = UUIDS.new(NOTgate,5*s,2*s,[or2])
 orc2 = UUIDS.new(ORgate,6*s,1.5*s,[no1, no2])
 i = 0
 while 1:
-  UUIDS.get(in1).power = (i//2)%2 != 0
-  UUIDS.get(in2).power = i%2 != 0
   UUIDS.update()
-  print(UUIDS.get(in1).power, UUIDS.get(in2).power, UUIDS.get(orc2).power)
   UUIDS.render()
   i += 1
-  for j in range(2**20):
-    pass
 code.InteractiveConsole(vars()).interact()
