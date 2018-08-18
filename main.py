@@ -42,6 +42,10 @@ class element:
     and ev.y >= self.y and ev.y <= self.y+self.H:
       if ev.keycode == ord('D'):
         self.inputs = []
+      elif ev.keycode == ord('I'):
+        self.parent.g_input = self.UUID
+      elif ev.keycode == ord('O') and hasattr(self.parent, 'g_input'):
+        self.inputs += [self.parent.g_input]
   def __repr__(self):
     return str(vars(self))
   def calc(self, ins=[]):
@@ -184,7 +188,8 @@ class UUIDs:
               UUIDS.render()
         if not tt:
           break
-        print(i)
+      if tt:
+        print('inf')
     else:
       s = self.get(x)
       i = []
