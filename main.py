@@ -125,10 +125,11 @@ class NOTgate(element):
     g.w.create_line(self.x, self.y, self.x+32, self.y+20, fill=self.s)
     g.w.create_line(self.x, self.y+40, self.x+32, self.y+20, fill=self.s)
     g.arc(self.x+36, self.y+20, 4, 0, 360, self.s)
-    pc = g.getPowerColor(self.inputs[0], self.UUID)
-    g.w.create_line(self.x, self.y+20, self.x-10, self.y+20, fill=pc)
-    x, y = g.get(self.inputs[0]).xy()
-    g.w.create_line(x, y, self.x-9, self.y+20, fill=pc)
+    if len(self.inputs) >= self.slots:
+      pc = g.getPowerColor(self.inputs[0], self.UUID)
+      g.w.create_line(self.x, self.y+20, self.x-10, self.y+20, fill=pc)
+      x, y = g.get(self.inputs[0]).xy()
+      g.w.create_line(x, y, self.x-9, self.y+20, fill=pc)
   def xy(self):
     return (self.x+self.W, self.y+self.H//2)
 
