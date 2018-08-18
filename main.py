@@ -25,6 +25,17 @@ class element:
   def update(self, ins=[]):
     self.power = self.calc(ins)
     self.updates += 1
+  def onclick1(self, x, y):
+    if  x >= self.x and x <= self.x+self.W \
+    and y >= self.y and y <= self.y+self.H:
+      if self.s == 'black':
+        self.s = 'orange'
+      else:
+        self.s = 'black'
+  def onclick2(self, x, y):
+    if  x >= self.x and x <= self.x+self.W \
+    and y >= self.y and y <= self.y+self.H:
+      self.s = 'green'
   def __repr__(self):
     return str(vars(self))
   def calc(self, ins=[]):
@@ -130,6 +141,8 @@ class UUIDs:
     self.UUIDi = -1
     self.tk = Tk()
     self.w = Canvas(self.tk, width=WIDTH, height=HEIGHT)
+    self.w.bind('<Button 1>',self.onclick1)
+    self.w.bind('<Button 3>',self.onclick2)
     self.w.pack()
   def get(self, x):
     for e in self.UUIDS:
@@ -169,6 +182,12 @@ class UUIDs:
     for e in self.UUIDS:
       e.render(self)
     self.tk.update()
+  def onclick1(self, ev):
+    for e in self.UUIDS:
+      e.onclick1(ev.x, ev.y)
+  def onclick2(self, ev):
+    for e in self.UUIDS:
+      e.onclick2(ev.x, ev.y)
 
 UUIDS = UUIDs()
 s = 70
@@ -189,6 +208,6 @@ while 1:
   UUIDS.update()
   print(UUIDS.get(in1).power, UUIDS.get(in2).power, UUIDS.get(orc2).power)
   UUIDS.render()
-  input()
+  #input()
   i += 1
 code.InteractiveConsole(vars()).interact()
