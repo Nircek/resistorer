@@ -9,10 +9,11 @@ class element:
   H = 10
   def __str__(self):
     return 'element'
-  def __init__(self, x, y, name=None, ins=[], s='black'):
+  def __init__(self, x=0, y=0, name=None, ins=[], s='black'):
     self.addr = super().__repr__().split('0x')[1][:-1]
     self.UUID = -1
     self.updates = 0
+    self.parent = None
     if name is None:
       self.name = self.__str__()
     else:
@@ -45,8 +46,8 @@ class element:
     return str(vars(self))
   def calc(self, ins=[]):
     return self.power
-  def render(self, g):
-    g.arc(self.x+self.W//2, self.y+self.H//2, min(self.W, self.H)//2, 0, 360, self.s)
+  def render(self):
+    self.parent.arc(self.x+self.W//2, self.y+self.H//2, min(self.W, self.H)//2, 0, 360, self.s)
   def xy(self):
     return (self.x+self.W//2, self.y+self.H//2)
 
@@ -69,17 +70,17 @@ class ANDgate(element):
       if not e:
         return False
     return True
-  def render(self, g):
-    g.w.create_line(self.x, self.y, self.x+20, self.y, fill=self.s)
-    g.w.create_line(self.x, self.y, self.x, self.y+40, fill=self.s)
-    g.w.create_line(self.x, self.y+40, self.x+20, self.y+40, fill=self.s)
-    g.arc(self.x+20, self.y+20, 20, 270, 180, self.s)
+  def render(self):
+    self.parent.w.create_line(self.x, self.y, self.x+20, self.y, fill=self.s)
+    self.parent.w.create_line(self.x, self.y, self.x, self.y+40, fill=self.s)
+    self.parent.w.create_line(self.x, self.y+40, self.x+20, self.y+40, fill=self.s)
+    self.parent.arc(self.x+20, self.y+20, 20, 270, 180, self.s)
     for i in range(len(self.inputs)):
       j = 40*(i+1)/(len(self.inputs)+1)
-      pc = g.getPowerColor(self.inputs[i], self.UUID)
-      g.w.create_line(self.x, self.y+j, self.x-10, self.y+j, fill=pc)
-      x, y = g.get(self.inputs[i]).xy()
-      g.w.create_line(x, y, self.x-10, self.y+j, fill=pc)
+      pc = self.parent.getPowerColor(self.inputs[i], self.UUID)
+      self.parent.w.create_line(self.x, self.y+j, self.x-10, self.y+j, fill=pc)
+      x, y = self.parent.get(self.inputs[i]).xy()
+      self.parent.w.create_line(x, y, self.x-10, self.y+j, fill=pc)
   def xy(self):
     return (self.x+self.W, self.y+self.H//2)
 
@@ -94,18 +95,18 @@ class ORgate(element):
       if e:
         return True
     return False
-  def render(self, g):
-    g.arc(self.x-20,self.y+20,math.sqrt(2*20**2),315,90,self.s)
-    g.w.create_line(self.x, self.y, self.x+20, self.y, fill=self.s)
-    g.w.create_line(self.x, self.y+40, self.x+20, self.y+40, fill=self.s)
-    g.arc(self.x+20,self.y+20,20,270,180,self.s)
+  def render(self):
+    self.parent.arc(self.x-20,self.y+20,math.sqrt(2*20**2),315,90,self.s)
+    self.parent.w.create_line(self.x, self.y, self.x+20, self.y, fill=self.s)
+    self.parent.w.create_line(self.x, self.y+40, self.x+20, self.y+40, fill=self.s)
+    self.parent.arc(self.x+20,self.y+20,20,270,180,self.s)
     for i in range(len(self.inputs)):
       j = 40*(i+1)/(len(self.inputs)+1)
       k = math.sqrt(20**2*2-(j-20)**2)-20
-      pc = g.getPowerColor(self.inputs[i], self.UUID)
-      g.w.create_line(self.x+k, self.y+j, self.x-10, self.y+j, fill=pc)
-      x, y = g.get(self.inputs[i]).xy()
-      g.w.create_line(x, y, self.x-10, self.y+j, fill=pc)
+      pc = self.parent.getPowerColor(self.inputs[i], self.UUID)
+      self.parent.w.create_line(self.x+k, self.y+j, self.x-10, self.y+j, fill=pc)
+      x, y = self.parent.get(self.inputs[i]).xy()
+      self.parent.w.create_line(x, y, self.x-10, self.y+j, fill=pc)
   def xy(self):
     return (self.x+self.W, self.y+self.H//2)
 
@@ -120,16 +121,16 @@ class NOTgate(element):
       return not False
     else:
       return not ins[0]
-  def render(self, g):
-    g.w.create_line(self.x, self.y, self.x, self.y+40, fill=self.s)
-    g.w.create_line(self.x, self.y, self.x+32, self.y+20, fill=self.s)
-    g.w.create_line(self.x, self.y+40, self.x+32, self.y+20, fill=self.s)
-    g.arc(self.x+36, self.y+20, 4, 0, 360, self.s)
+  def render(self):
+    self.parent.w.create_line(self.x, self.y, self.x, self.y+40, fill=self.s)
+    self.parent.w.create_line(self.x, self.y, self.x+32, self.y+20, fill=self.s)
+    self.parent.w.create_line(self.x, self.y+40, self.x+32, self.y+20, fill=self.s)
+    self.parent.arc(self.x+36, self.y+20, 4, 0, 360, self.s)
     if len(self.inputs) >= self.slots:
-      pc = g.getPowerColor(self.inputs[0], self.UUID)
-      g.w.create_line(self.x, self.y+20, self.x-10, self.y+20, fill=pc)
-      x, y = g.get(self.inputs[0]).xy()
-      g.w.create_line(x, y, self.x-9, self.y+20, fill=pc)
+      pc = self.parent.getPowerColor(self.inputs[0], self.UUID)
+      self.parent.w.create_line(self.x, self.y+20, self.x-10, self.y+20, fill=pc)
+      x, y = self.parent.get(self.inputs[0]).xy()
+      self.parent.w.create_line(x, y, self.x-9, self.y+20, fill=pc)
   def xy(self):
     return (self.x+self.W, self.y+self.H//2)
 
@@ -163,6 +164,7 @@ class UUIDs:
   def new(self, x=None):
     if x is None:
       x = element()
+    x.parent = self
     self.UUIDi += 1
     while self.get(self.UUIDi) is not None:
       self.UUIDi += 1
@@ -192,7 +194,7 @@ class UUIDs:
   def render(self):
     self.w.delete('all')
     for e in self.UUIDS:
-      e.render(self)
+      e.render()
     self.tk.update()
   def onclick1(self, ev):
     for e in self.UUIDS:
