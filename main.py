@@ -34,11 +34,6 @@ class element:
   def update(self, ins=[]):
     self.power = self.calc(ins)
     self.updates += 1
-  def onclick1(self):
-    if self.s == 'black':
-      self.s = 'orange'
-    else:
-      self.s = 'black'
   def onclick2(self):
       self.s = 'green'
   def motion(self, x, y):
@@ -186,6 +181,7 @@ class UUIDs:
     self.w.bind('<B1-Motion>', self.motion)
     self.w.pack()
     self.w.focus_set()
+    self.in_motion = None
   def get(self, x):
     for e in self.UUIDS:
       if e.UUID == x:
@@ -244,21 +240,19 @@ class UUIDs:
       e.render()
     self.tk.update()
   def onclick1(self, ev):
-    print(ev)
+    self.in_motion = None
     for e in self.UUIDS:
       if  ev.x >= e.x and ev.x <= e.x+e.W \
       and ev.y >= e.y and ev.y <= e.y+e.H:
-        e.onclick1()
+        self.in_motion = e.UUID
   def onclick2(self, ev):
     for e in self.UUIDS:
       if  ev.x >= e.x and ev.x <= e.x+e.W \
       and ev.y >= e.y and ev.y <= e.y+e.H:
         e.onclick2()
   def motion(self, ev):
-    for e in self.UUIDS:
-      if  ev.x >= e.x and ev.x <= e.x+e.W \
-      and ev.y >= e.y and ev.y <= e.y+e.H:
-        e.motion(ev.x, ev.y)
+    if self.in_motion is not None:
+      self.get(self.in_motion).motion(ev.x, ev.y)
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
