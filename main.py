@@ -34,6 +34,11 @@ class element:
   def update(self, ins):
     self.power = self.calc(ins)
     self.updates += 1
+  def onclick1(self):
+    if self.s == 'black':
+      self.s = 'orange'
+    else:
+      self.s = 'black'
   def onclick2(self):
       self.s = 'green'
   def motion(self, x, y):
@@ -197,12 +202,14 @@ class UUIDs:
     self.tk = Tk()
     self.w = Canvas(self.tk, width=WIDTH, height=HEIGHT)
     self.w.bind('<Button 1>',self.onclick1)
+    self.w.bind('<ButtonRelease-1>', self.onrel)
     self.w.bind('<Button 3>',self.onclick2)
     self.w.bind('<KeyPress>',self.onkey)
     self.w.bind('<B1-Motion>', self.motion)
     self.w.pack()
     self.w.focus_set()
     self.in_motion = None
+    self.click_moved = False
   def get(self, x):
     for e in self.UUIDS:
       if e.UUID == x:
@@ -261,17 +268,25 @@ class UUIDs:
       e.render()
     self.tk.update()
   def onclick1(self, ev):
+    self.click_moved = False
     self.in_motion = None
     for e in self.UUIDS:
       if  ev.x >= e.x and ev.x <= e.x+e.W \
       and ev.y >= e.y and ev.y <= e.y+e.H:
         self.in_motion = e.UUID
+  def onrel(self,ev):
+    if not self.click_moved:
+      for e in self.UUIDS:
+        if  ev.x >= e.x and ev.x <= e.x+e.W \
+        and ev.y >= e.y and ev.y <= e.y+e.H:
+          e.onclick1()
   def onclick2(self, ev):
     for e in self.UUIDS:
       if  ev.x >= e.x and ev.x <= e.x+e.W \
       and ev.y >= e.y and ev.y <= e.y+e.H:
         e.onclick2()
   def motion(self, ev):
+    self.click_moved = True
     if self.in_motion is not None:
       self.get(self.in_motion).motion(ev.x, ev.y)
   def onkey(self, ev):
@@ -301,9 +316,7 @@ no1 = UUIDS.new(NOTgate,5*s,s,[or1])
 no2 = UUIDS.new(NOTgate,5*s,2*s,[or2])
 orc2 = UUIDS.new(ORgate,6*s,1.5*s,[no1, no2])
 out = UUIDS.new(light, 7*s, 1.5*s, [orc2])
-i = 0
 while 1:
   UUIDS.update()
   UUIDS.render()
-  i += 1
 code.InteractiveConsole(vars()).interact()
