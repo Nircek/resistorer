@@ -51,10 +51,10 @@ class element:
       if ev.keycode == ord('D'):
         self.inputs = []
       elif ev.keycode == ord('I'):
-        self.parent.g_input = self.UUID
-      elif ev.keycode == ord('O') and hasattr(self.parent, 'g_input'):
-        self.inputs += [self.parent.g_input]
-        self.parent.get(self.parent.g_input).outs += [self]
+        self.parent.selected = self.UUID
+      elif ev.keycode == ord('O') and self.parent.selected is not None:
+        self.inputs += [self.parent.selected]
+        self.parent.get(self.parent.selected).outs += [self]
       elif ev.keycode == 46:
         for e in self.outs:
           i=0
@@ -195,21 +195,23 @@ class UUIDs:
       self.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,style=ARC,outline=outline)
     else:
       self.w.create_arc(x-r,y-r,x+r,y+r,start=s,extent=e,style=ARC, outline=outline)
-    
   def __init__(self, WIDTH=1280, HEIGHT=720):
     self.UUIDS = []
     self.UUIDi = -1
     self.tk = Tk()
     self.w = Canvas(self.tk, width=WIDTH, height=HEIGHT)
     self.w.bind('<Button 1>',self.onclick1)
-    self.w.bind('<ButtonRelease-1>', self.onrel)
+    self.w.bind('<ButtonRelease-1>', self.onrel1)
+    self.w.bind('<B1-Motion>', self.motion1)
     self.w.bind('<Button 3>',self.onclick2)
+    self.w.bind('<ButtonRelease-3>', self.onrel2)
+    self.w.bind('<B3-Motion>', self.motion2)
     self.w.bind('<KeyPress>',self.onkey)
-    self.w.bind('<B1-Motion>', self.motion)
     self.w.pack()
     self.w.focus_set()
     self.in_motion = None
     self.click_moved = False
+    self.selected = None
   def get(self, x):
     for e in self.UUIDS:
       if e.UUID == x:
@@ -274,21 +276,41 @@ class UUIDs:
       if  ev.x >= e.x and ev.x <= e.x+e.W \
       and ev.y >= e.y and ev.y <= e.y+e.H:
         self.in_motion = e.UUID
-  def onrel(self,ev):
+  def onrel1(self,ev):
     if not self.click_moved:
       for e in self.UUIDS:
         if  ev.x >= e.x and ev.x <= e.x+e.W \
         and ev.y >= e.y and ev.y <= e.y+e.H:
           e.onclick1()
-  def onclick2(self, ev):
-    for e in self.UUIDS:
-      if  ev.x >= e.x and ev.x <= e.x+e.W \
-      and ev.y >= e.y and ev.y <= e.y+e.H:
-        e.onclick2()
-  def motion(self, ev):
+  def motion1(self, ev):
     self.click_moved = True
     if self.in_motion is not None:
       self.get(self.in_motion).motion(ev.x, ev.y)
+  def onclick2(self, ev):
+    self.click_moved = False
+    self.selected = None
+    for e in self.UUIDS:
+      if  ev.x >= e.x and ev.x <= e.x+e.W \
+      and ev.y >= e.y and ev.y <= e.y+e.H:
+        self.selected = e.UUID
+  def onrel2(self,ev):
+    if not self.click_moved:
+      for e in self.UUIDS:
+        if  ev.x >= e.x and ev.x <= e.x+e.W \
+        and ev.y >= e.y and ev.y <= e.y+e.H:
+          e.onclick2()
+    elif self.selected is not None:
+      for e in self.UUIDS:
+        if  ev.x >= e.x and ev.x <= e.x+e.W \
+        and ev.y >= e.y and ev.y <= e.y+e.H:
+          e.inputs += [self.selected]
+          self.get(self.selected).outs += [e]
+  def motion2(self, ev):
+    self.click_moved = True
+    if self.selected is not None:
+      t = self.get(self.selected)
+      self.w.create_line(t.x+t.W//2, t.y+t.H//2, ev.x, ev.y)
+      # TODO: render that line every each render()
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
