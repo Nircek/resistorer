@@ -41,6 +41,9 @@ class element:
       self.s = 'black'
   def onclick2(self):
       self.s = 'green'
+  def motion(self, x, y):
+      self.x = x - self.W // 2
+      self.y = y - self.H // 2
   def onkey(self, ev):
     if  ev.x >= self.x and ev.x <= self.x+self.W \
     and ev.y >= self.y and ev.y <= self.y+self.H:
@@ -180,6 +183,7 @@ class UUIDs:
     self.w.bind('<Button 1>',self.onclick1)
     self.w.bind('<Button 3>',self.onclick2)
     self.w.bind('<KeyPress>',self.onkey)
+    self.w.bind('<B1-Motion>', self.motion)
     self.w.pack()
     self.w.focus_set()
   def get(self, x):
@@ -240,6 +244,7 @@ class UUIDs:
       e.render()
     self.tk.update()
   def onclick1(self, ev):
+    print(ev)
     for e in self.UUIDS:
       if  ev.x >= e.x and ev.x <= e.x+e.W \
       and ev.y >= e.y and ev.y <= e.y+e.H:
@@ -249,6 +254,11 @@ class UUIDs:
       if  ev.x >= e.x and ev.x <= e.x+e.W \
       and ev.y >= e.y and ev.y <= e.y+e.H:
         e.onclick2()
+  def motion(self, ev):
+    for e in self.UUIDS:
+      if  ev.x >= e.x and ev.x <= e.x+e.W \
+      and ev.y >= e.y and ev.y <= e.y+e.H:
+        e.motion(ev.x, ev.y)
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
