@@ -31,7 +31,7 @@ class element:
     self.outs = []
   def getsize(self):
     return self.W, self.H
-  def update(self, ins=[]):
+  def update(self, ins):
     self.power = self.calc(ins)
     self.updates += 1
   def onclick2(self):
@@ -61,7 +61,7 @@ class element:
         self.parent.rm(self.UUID)
   def __repr__(self):
     return str(vars(self))
-  def calc(self, ins=[]):
+  def calc(self, ins):
     return self.power
   def render(self):
     self.parent.arc(self.x+self.W//2, self.y+self.H//2, min(self.W, self.H)//2, 0, 360, self.s)
@@ -82,6 +82,27 @@ class switch(element):
     if s == 'black' and self.power:
       s = 'red'
     self.parent.arc(self.x+self.W//2, self.y+self.H//2, min(self.W, self.H)//2, 0, 360, s)
+
+class light(element):
+  slots = 1
+  H = 40
+  W = 40
+  def __str__(self):
+    return 'light'
+  def calc(self, ins):
+    if len(ins) < self.slots:
+      return False
+    else:
+      return ins[0]
+  def render(self):
+    s = self.s
+    if s == 'black' and self.power:
+      s = 'red'
+    self.parent.w.create_rectangle(self.x, self.y, self.x+self.W, self.y+self.H, outline=s)
+    if len(self.inputs) >= self.slots:
+      pc = self.parent.getPowerColor(self.inputs[0], self.UUID)
+      x, y = self.parent.get(self.inputs[0]).xy()
+      self.parent.w.create_line(x, y, self.x+self.W//2, self.y+self.H//2, fill=pc)
 
 class ANDgate(element):
   W = 40
@@ -256,7 +277,7 @@ class UUIDs:
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
-      gates = {1:switch, 2:NOTgate, 3:ORgate, 4:ANDgate}
+      gates = [None, switch, light, NOTgate, ORgate, ANDgate]
       b = gates[ev.keycode-111]
       self.new(b, ev.x-b.W//2, ev.y-b.H//2)
     if ev.keycode == 220:
@@ -279,6 +300,7 @@ or2 = UUIDS.new(ORgate,4*s,2*s,[orc1, not2])
 no1 = UUIDS.new(NOTgate,5*s,s,[or1])
 no2 = UUIDS.new(NOTgate,5*s,2*s,[or2])
 orc2 = UUIDS.new(ORgate,6*s,1.5*s,[no1, no2])
+out = UUIDS.new(light, 7*s, 1.5*s, [orc2])
 i = 0
 while 1:
   UUIDS.update()
