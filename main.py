@@ -273,7 +273,7 @@ class UUIDs:
       e.render()
     if self.selected is not None and self.rmx != -1:
       t = self.get(self.selected)
-      self.w.create_line(t.p.x+t.s.w//2, t.p.y+t.s.h//2, self.rmx, self.rmy)
+      self.w.create_line(t.e.x, t.e.y, self.rmx, self.rmy)
     self.tk.update()
   def onclick1(self, ev):
     self.click_moved = False
