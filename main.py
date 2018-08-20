@@ -22,6 +22,7 @@ class element:
     self.UUID = -1
     self.updates = 0
     self.parent = parent
+    self.e = pos(-1, -1)
     if name is None:
       self.name = self.__str__()
     else:
@@ -41,6 +42,7 @@ class element:
   def update(self, ins):
     self.power = self.calc(ins)
     self.updates += 1
+    self.e = pos(self.xy())
   def onclick1(self):
     if self.st == 'black':
       self.st = 'orange'
@@ -111,8 +113,8 @@ class light(element):
     self.parent.w.create_rectangle(self.p.x, self.p.y, self.p.x+self.s.w, self.p.y+self.s.h, outline=st)
     if len(self.inputs) >= self.slots:
       pc = self.parent.getPowerColor(self.inputs[0], self.UUID)
-      x, y = self.parent.get(self.inputs[0]).xy()
-      self.parent.w.create_line(x, y, self.p.x+self.s.w//2, self.p.y+self.s.h//2, fill=pc)
+      e = self.parent.get(self.inputs[0]).e
+      self.parent.w.create_line(e.x, e.y, self.p.x+self.s.w//2, self.p.y+self.s.h//2, fill=pc)
 
 class ANDgate(element):
   s = pos(40, 40)
@@ -133,8 +135,8 @@ class ANDgate(element):
       j = 40*(i+1)/(len(self.inputs)+1)
       pc = self.parent.getPowerColor(self.inputs[i], self.UUID)
       self.parent.w.create_line(self.p.x, self.p.y+j, self.p.x-10, self.p.y+j, fill=pc)
-      x, y = self.parent.get(self.inputs[i]).xy()
-      self.parent.w.create_line(x, y, self.p.x-10, self.p.y+j, fill=pc)
+      e = self.parent.get(self.inputs[i]).e
+      self.parent.w.create_line(e.x, e.y, self.p.x-10, self.p.y+j, fill=pc)
   def xy(self):
     return (self.p.x+self.s.w, self.p.y+self.s.h//2)
 
@@ -158,8 +160,8 @@ class ORgate(element):
       k = math.sqrt(20**2*2-(j-20)**2)-20
       pc = self.parent.getPowerColor(self.inputs[i], self.UUID)
       self.parent.w.create_line(self.p.x+k, self.p.y+j, self.p.x-10, self.p.y+j, fill=pc)
-      x, y = self.parent.get(self.inputs[i]).xy()
-      self.parent.w.create_line(x, y, self.p.x-10, self.p.y+j, fill=pc)
+      e = self.parent.get(self.inputs[i]).e
+      self.parent.w.create_line(e.x, e.y, self.p.x-10, self.p.y+j, fill=pc)
   def xy(self):
     return (self.p.x+self.s.w, self.p.y+self.s.h//2)
 
@@ -181,8 +183,8 @@ class NOTgate(element):
     if len(self.inputs) >= self.slots:
       pc = self.parent.getPowerColor(self.inputs[0], self.UUID)
       self.parent.w.create_line(self.p.x, self.p.y+20, self.p.x-10, self.p.y+20, fill=pc)
-      x, y = self.parent.get(self.inputs[0]).xy()
-      self.parent.w.create_line(x, y, self.p.x-9, self.p.y+20, fill=pc)
+      e = self.parent.get(self.inputs[0]).e
+      self.parent.w.create_line(e.x, e.y, self.p.x-9, self.p.y+20, fill=pc)
   def xy(self):
     return (self.p.x+self.s.w, self.p.y+self.s.h//2)
 
