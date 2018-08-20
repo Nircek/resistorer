@@ -1,6 +1,7 @@
 import code
 from tkinter import *
 import math
+from time import time
 
 class pos:
   def __init__(self, *a):
@@ -41,12 +42,12 @@ class element:
     self.power = self.calc(ins)
     self.updates += 1
   def onclick1(self):
-    if self.s == 'black':
-      self.s = 'orange'
+    if self.st == 'black':
+      self.st = 'orange'
     else:
-      self.s = 'black'
+      self.st = 'black'
   def onclick2(self):
-      self.s = 'green'
+      self.st = 'green'
   def motion(self, p):
       self.p.x = p.x - self.s.w // 2
       self.p.y = p.y - self.s.h // 2
@@ -244,21 +245,19 @@ class UUIDs:
     x.UUID = int(self.UUIDi)
     self.UUIDS += [x]
     return self.UUIDi
-  def update(self, upd=False, x=None):
+  def update(self, inf=False, x=None):
     if x is None:
       tt = False
       for i in range(len(self.UUIDS)):
         tt = False
         for e in self.UUIDS:
           t = self.get(e.UUID).power
-          self.update(upd, e.UUID)
+          self.update(x=e.UUID)
           if self.get(e.UUID).power != t:
             tt = True
-            if upd:
-              UUIDS.render()
-        if not tt:
+        if not (tt and inf):
           break
-      if tt:
+      if tt and inf:
         print('inf')
     else:
       s = self.get(x)
@@ -290,7 +289,7 @@ class UUIDs:
   def motion1(self, ev):
     self.click_moved = True
     if self.in_motion is not None:
-      self.get(self.in_motion).motion(ev.x, ev.y)
+      self.get(self.in_motion).motion(ev)
   def onclick2(self, ev):
     self.click_moved = False
     self.selected = None
@@ -344,5 +343,7 @@ orc2 = UUIDS.new(ORgate,pos(6*s,1.5*s),[no1, no2])
 out = UUIDS.new(light, pos(7*s, 1.5*s), [orc2])
 while 1:
   UUIDS.update()
-  UUIDS.render()
+  t = time()
+  while t+0.2 > time():
+    UUIDS.render()
 code.InteractiveConsole(vars()).interact()
