@@ -216,7 +216,7 @@ class UUIDs:
     self.in_motion = None
     self.click_moved = False
     self.selected = None
-    self.rmx = -1
+    self.rm = pos(-1,-1)
   def get(self, x):
     for e in self.UUIDS:
       if e.UUID == x:
@@ -271,9 +271,9 @@ class UUIDs:
     self.w.delete('all')
     for e in self.UUIDS:
       e.render()
-    if self.selected is not None and self.rmx != -1:
+    if self.selected is not None and self.rm.x != -1:
       t = self.get(self.selected)
-      self.w.create_line(t.e.x, t.e.y, self.rmx, self.rmy)
+      self.w.create_line(t.e.x, t.e.y, self.rm.x, self.rm.y)
     self.tk.update()
   def onclick1(self, ev):
     self.click_moved = False
@@ -311,11 +311,11 @@ class UUIDs:
         and ev.y >= e.p.y and ev.y <= e.p.y+e.s.h:
           e.inputs += [self.selected]
           self.get(self.selected).outs += [e]
-    self.rmx = -1
+    self.rm = pos(-1,-1)
   def motion2(self, ev):
     self.click_moved = True
-    self.rmx = ev.x
-    self.rmy = ev.y
+    self.rm.x = ev.x
+    self.rm.y = ev.y
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
