@@ -53,6 +53,7 @@ class element:
   def motion(self, p):
       self.p.x = p.x - self.s.w // 2
       self.p.y = p.y - self.s.h // 2
+      self.e = pos(self.xy())
   def onkey(self, ev):
     if  ev.x >= self.p.x and ev.x <= self.p.x+self.s.w \
     and ev.y >= self.p.y and ev.y <= self.p.y+self.s.h:
