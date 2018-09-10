@@ -371,9 +371,13 @@ no1 = UUIDS.new(NOTgate,pos(5*s,s),[or1])
 no2 = UUIDS.new(NOTgate,pos(5*s,2*s),[or2])
 orc2 = UUIDS.new(ORgate,pos(6*s,1.5*s),[no1, no2])
 out = UUIDS.new(light, pos(7*s, 1.5*s), [orc2])
-while 1:
-  UUIDS.update()
-  t = time()
-  while t+0.2 > time():
-    UUIDS.render()
-code.InteractiveConsole(vars()).interact()
+try:
+  while 1:
+    UUIDS.update()
+    t = time()
+    while t+0.2 > time():
+      UUIDS.render()
+except TclError:
+  # window exit
+  pass
+# code.InteractiveConsole(vars()).interact()
