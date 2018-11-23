@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-# file from https://github.com/Nircek/circuiter
+# file from https://github.com/Nircek/resistorer
 # licensed under MIT license
 
 # MIT License
@@ -109,112 +109,6 @@ class element:
     self.parent.arc(self.p.x+self.s.w//2, self.p.y+self.s.h//2, min(self.s.w, self.s.h)//2, 0, 360, self.st)
   def xy(self):
     return (self.p.x+self.s.w//2, self.p.y+self.s.h//2)
-
-
-class switch(element):
-  slots = 0
-  s = pos(40, 40)
-  def __str__(self):
-    return 'switch'
-  def onclick2(self):
-    self.power = not self.power
-  def render(self):
-    st = self.st
-    if st == 'black' and self.power:
-      st = 'red'
-    self.parent.arc(self.p.x+self.s.w//2, self.p.y+self.s.h//2, min(self.s.w, self.s.h)//2, 0, 360, st)
-
-class light(element):
-  slots = 1
-  s = pos(40, 40)
-  def __str__(self):
-    return 'light'
-  def calc(self, ins):
-    if len(ins) < self.slots:
-      return False
-    else:
-      return ins[0]
-  def render(self):
-    st = self.st
-    if st == 'black' and self.power:
-      st = 'red'
-    self.parent.w.create_rectangle(self.p.x, self.p.y, self.p.x+self.s.w, self.p.y+self.s.h, outline=st)
-    if len(self.inputs) >= self.slots:
-      pc = self.parent.getPowerColor(self.inputs[0], self.UUID)
-      e = self.parent.get(self.inputs[0]).e
-      self.parent.w.create_line(e.x, e.y, self.p.x+self.s.w//2, self.p.y+self.s.h//2, fill=pc)
-
-class ANDgate(element):
-  s = pos(40, 40)
-  slots = -1
-  def __str__(self):
-    return 'ANDgate'
-  def calc(self, ins):
-    for e in ins:
-      if not e:
-        return False
-    return True
-  def render(self):
-    self.parent.w.create_line(self.p.x, self.p.y, self.p.x+20, self.p.y, fill=self.st)
-    self.parent.w.create_line(self.p.x, self.p.y, self.p.x, self.p.y+40, fill=self.st)
-    self.parent.w.create_line(self.p.x, self.p.y+40, self.p.x+20, self.p.y+40, fill=self.st)
-    self.parent.arc(self.p.x+20, self.p.y+20, 20, 270, 180, self.st)
-    for i in range(len(self.inputs)):
-      j = 40*(i+1)/(len(self.inputs)+1)
-      pc = self.parent.getPowerColor(self.inputs[i], self.UUID)
-      self.parent.w.create_line(self.p.x, self.p.y+j, self.p.x-10, self.p.y+j, fill=pc)
-      e = self.parent.get(self.inputs[i]).e
-      self.parent.w.create_line(e.x, e.y, self.p.x-10, self.p.y+j, fill=pc)
-  def xy(self):
-    return (self.p.x+self.s.w, self.p.y+self.s.h//2)
-
-class ORgate(element):
-  slots = -1
-  s = pos(40, 40)
-  def __str__(self):
-    return 'ORgate'
-  def calc(self, ins):
-    for e in ins:
-      if e:
-        return True
-    return False
-  def render(self):
-    self.parent.arc(self.p.x-20,self.p.y+20,math.sqrt(2*20**2),315,90,self.st)
-    self.parent.w.create_line(self.p.x, self.p.y, self.p.x+20, self.p.y, fill=self.st)
-    self.parent.w.create_line(self.p.x, self.p.y+40, self.p.x+20, self.p.y+40, fill=self.st)
-    self.parent.arc(self.p.x+20,self.p.y+20,20,270,180,self.st)
-    for i in range(len(self.inputs)):
-      j = 40*(i+1)/(len(self.inputs)+1)
-      k = math.sqrt(20**2*2-(j-20)**2)-20
-      pc = self.parent.getPowerColor(self.inputs[i], self.UUID)
-      self.parent.w.create_line(self.p.x+k, self.p.y+j, self.p.x-10, self.p.y+j, fill=pc)
-      e = self.parent.get(self.inputs[i]).e
-      self.parent.w.create_line(e.x, e.y, self.p.x-10, self.p.y+j, fill=pc)
-  def xy(self):
-    return (self.p.x+self.s.w, self.p.y+self.s.h//2)
-
-class NOTgate(element):
-  slots = 1
-  s = pos(40, 40)
-  def __str__(self):
-    return 'NOTgate'
-  def calc(self, ins):
-    if len(ins) < self.slots:
-      return not False
-    else:
-      return not ins[0]
-  def render(self):
-    self.parent.w.create_line(self.p.x, self.p.y, self.p.x, self.p.y+40, fill=self.st)
-    self.parent.w.create_line(self.p.x, self.p.y, self.p.x+32, self.p.y+20, fill=self.st)
-    self.parent.w.create_line(self.p.x, self.p.y+40, self.p.x+32, self.p.y+20, fill=self.st)
-    self.parent.arc(self.p.x+36, self.p.y+20, 4, 0, 360, self.st)
-    if len(self.inputs) >= self.slots:
-      pc = self.parent.getPowerColor(self.inputs[0], self.UUID)
-      self.parent.w.create_line(self.p.x, self.p.y+20, self.p.x-10, self.p.y+20, fill=pc)
-      e = self.parent.get(self.inputs[0]).e
-      self.parent.w.create_line(e.x, e.y, self.p.x-9, self.p.y+20, fill=pc)
-  def xy(self):
-    return (self.p.x+self.s.w, self.p.y+self.s.h//2)
 
 class UUIDs:
   def getPowerColor(self, s, d):
@@ -347,7 +241,7 @@ class UUIDs:
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
-      gates = [None, switch, light, NOTgate, ORgate, ANDgate]
+      gates = [None]
       b = gates[ev.keycode-111]
       self.new(b, pos(ev.x-b.s.w//2, ev.y-b.s.h//2))
     if ev.keycode == 220:
@@ -359,18 +253,6 @@ class UUIDs:
       e.onkey(ev)
 
 UUIDS = UUIDs()
-s = 70
-in1 = UUIDS.new(switch,pos(s,s))
-in2 = UUIDS.new(switch,pos(s,2*s))
-not1 = UUIDS.new(NOTgate,pos(2*s,s),[in1])
-not2 = UUIDS.new(NOTgate,pos(2*s,2*s),[in2])
-orc1 = UUIDS.new(ORgate,pos(3*s,1.5*s),[not1, not2])
-or1 = UUIDS.new(ORgate,pos(4*s,s),[not1, orc1])
-or2 = UUIDS.new(ORgate,pos(4*s,2*s),[orc1, not2])
-no1 = UUIDS.new(NOTgate,pos(5*s,s),[or1])
-no2 = UUIDS.new(NOTgate,pos(5*s,2*s),[or2])
-orc2 = UUIDS.new(ORgate,pos(6*s,1.5*s),[no1, no2])
-out = UUIDS.new(light, pos(7*s, 1.5*s), [orc2])
 try:
   while 1:
     UUIDS.update()
