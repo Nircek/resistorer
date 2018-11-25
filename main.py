@@ -39,16 +39,21 @@ class pos:
     self.w = a[0]
     self.h = a[1]
 
-def pround(p, s=40):
-  p.x = round(p.x/s)*s
-  p.y = round(p.y/s)*s
-  p.w = round(p.w/s)*s
-  p.h = round(p.h/s)*s
+s = 40
+sh = (0,0)
+
+def pround(p, sh=sh):
+  x = lambda y,s : round(y/s)*s
+  p.x = x(p.x+sh.x, s)
+  p.y = x(p.y+sh.y, s)
+  p.h = x(p.h+sh.h, s)
+  p.w = x(p.w+sh.w, s)
   return p
     
 class element:
   slots = 0
-  s = pos(10, 10)
+  s = pos(s,s)
+  sh = pos(0,0)
   def __str__(self):
     return 'element'
   def __init__(self, parent, p):
@@ -57,7 +62,7 @@ class element:
     self.UUID = -1
     self.parent = parent
     self.e = pos(-1, -1)
-    self.p = pround(p)
+    self.p = pround(p, self.sh)
   def getsize(self):
     return self.s
   def onclick1(self):
@@ -80,18 +85,20 @@ class element:
     self.parent.arc(self.p.x+self.s.w//2, self.p.y+self.s.h//2, min(self.s.w, self.s.h)//2, 0, 360)
 
 class verwire(element):
+  sh=pos(s//2,0)
   s = pos(40, 40)
   def __str__(self):
     return 'verwire'
   def render(self):
-    self.parent.w.create_line(self.p.x+20, self.p.y, self.p.x+20, self.p.y+40, fill='black')
+    self.parent.w.create_line(self.p.x, self.p.y, self.p.x, self.p.y+40, fill='black')
 
 class horwire(element):
+  sh=pos(0,s//2)
   s = pos(40, 40)
   def __str__(self):
     return 'horwire'
   def render(self):
-    self.parent.w.create_line(self.p.x, self.p.y+20, self.p.x+40, self.p.y+20, fill='black')
+    self.parent.w.create_line(self.p.x, self.p.y, self.p.x+40, self.p.y, fill='black')
 
 class UUIDs:
   def arc(self,x,y,r,s,e, outline='black'):
@@ -117,6 +124,8 @@ class UUIDs:
     self.in_motion = None
     self.click_moved = False
     self.selected = None
+  def point(self, p):
+    self.w.create_oval(p.x, p.y, p.x, p.y, width = 0, fill = 'black')
   def get(self, x):
     for e in self.UUIDS:
       if e.UUID == x:
@@ -139,6 +148,9 @@ class UUIDs:
     return self.UUIDi
   def render(self):
     self.w.delete('all')
+    for x in range(self.w.winfo_width()//s):
+      for y in range(self.w.winfo_height()//s):
+        self.point(pos(x*s, y*s))
     for e in self.UUIDS:
       e.render()
     if self.selected is not None and self.rmc.x != -1:
