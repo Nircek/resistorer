@@ -85,6 +85,13 @@ class verwire(element):
   def render(self):
     self.parent.w.create_line(self.p.x+20, self.p.y, self.p.x+20, self.p.y+40, fill='black')
 
+class horwire(element):
+  s = pos(40, 40)
+  def __str__(self):
+    return 'horwire'
+  def render(self):
+    self.parent.w.create_line(self.p.x, self.p.y+20, self.p.x+40, self.p.y+20, fill='black')
+
 class UUIDs:
   def arc(self,x,y,r,s,e, outline='black'):
     if e >= 360:
@@ -181,7 +188,7 @@ class UUIDs:
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
-      gates = [None, element, verwire]
+      gates = [None, element, verwire, horwire]
       if len(gates) <= ev.keycode-111:
         print('NO F',ev.keycode-111,' ELEMENT', sep='')
       else:
