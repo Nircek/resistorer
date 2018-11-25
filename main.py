@@ -44,55 +44,27 @@ class element:
   s = pos(10, 10)
   def __str__(self):
     return 'element'
-  def __init__(self, parent, p, name=None, ins=None, st='black'):
+  def __init__(self, parent, p):
+    # UUIDS, xy
     self.addr = super().__repr__().split('0x')[1][:-1]
     self.UUID = -1
-    self.updates = 0
     self.parent = parent
     self.e = pos(-1, -1)
-    if name is None:
-      self.name = self.__str__()
-    else:
-      self.name = name
-    if ins is None:
-      self.inputs = []
-    else:
-      self.inputs = ins
-    for e in self.inputs:
-      self.parent.get(e).outs += [self]
-    self.power = False
     self.p = p
-    self.st = st
-    self.outs = []
   def getsize(self):
     return self.s
-  def update(self, ins):
-    self.power = self.calc(ins)
-    self.updates += 1
-    self.e = pos(self.xy())
   def onclick1(self):
-    if self.st == 'black':
-      self.st = 'orange'
-    else:
-      self.st = 'black'
+    pass
   def onclick2(self):
-      self.st = 'green'
+    pass
   def motion(self, p):
       self.p.x = p.x - self.s.w // 2
       self.p.y = p.y - self.s.h // 2
-      self.e = pos(self.xy())
   def onkey(self, ev):
     if  ev.x >= self.p.x and ev.x <= self.p.x+self.s.w \
     and ev.y >= self.p.y and ev.y <= self.p.y+self.s.h:
       print(self.UUID)
-      if ev.keycode == ord('D'):
-        self.inputs = []
-      elif ev.keycode == ord('I'):
-        self.parent.selected = self.UUID
-      elif ev.keycode == ord('O') and self.parent.selected is not None:
-        self.inputs += [self.parent.selected]
-        self.parent.get(self.parent.selected).outs += [self]
-      elif ev.keycode == 46:
+      if ev.keycode == 46:
         for e in self.outs:
           i=0
           while i < len(e.inputs):
@@ -103,18 +75,10 @@ class element:
         self.parent.rm(self.UUID)
   def __repr__(self):
     return str(vars(self))
-  def calc(self, ins):
-    return self.power
   def render(self):
-    self.parent.arc(self.p.x+self.s.w//2, self.p.y+self.s.h//2, min(self.s.w, self.s.h)//2, 0, 360, self.st)
-  def xy(self):
-    return (self.p.x+self.s.w//2, self.p.y+self.s.h//2)
+    self.parent.arc(self.p.x+self.s.w//2, self.p.y+self.s.h//2, min(self.s.w, self.s.h)//2, 0, 360)
 
 class UUIDs:
-  def getPowerColor(self, s, d):
-    if self.get(s).power:
-      return 'red'
-    return 'black'
   def arc(self,x,y,r,s,e, outline='black'):
     if e >= 360:
       self.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,style=ARC,outline=outline)
@@ -138,7 +102,6 @@ class UUIDs:
     self.in_motion = None
     self.click_moved = False
     self.selected = None
-    self.rmc = pos(-1,-1)
   def get(self, x):
     for e in self.UUIDS:
       if e.UUID == x:
@@ -151,44 +114,14 @@ class UUIDs:
         del self.UUIDS[i]
       else:
         i += 1
-  def new(self, c, p, ins=None):
-    e = c(self, p, ins=ins)
+  def new(self, c, p):
+    e = c(self, p)
     self.UUIDi += 1
     while self.get(self.UUIDi) is not None:
       self.UUIDi += 1
     e.UUID = int(self.UUIDi)
     self.UUIDS += [e]
     return self.UUIDi
-  def add(self, x=None): # deprecated because x must have parent
-    if x is None:
-      x = element()
-    x.parent = self
-    self.UUIDi += 1
-    while self.get(self.UUIDi) is not None:
-      self.UUIDi += 1
-    x.UUID = int(self.UUIDi)
-    self.UUIDS += [x]
-    return self.UUIDi
-  def update(self, inf=False, x=None):
-    if x is None:
-      tt = False
-      for i in range(len(self.UUIDS)):
-        tt = False
-        for e in self.UUIDS:
-          t = self.get(e.UUID).power
-          self.update(x=e.UUID)
-          if self.get(e.UUID).power != t:
-            tt = True
-        if not (tt and inf):
-          break
-      if tt and inf:
-        print('inf')
-    else:
-      s = self.get(x)
-      i = []
-      for j in s.inputs:
-        i += [self.get(j).power]
-      s.update(i)
   def render(self):
     self.w.delete('all')
     for e in self.UUIDS:
@@ -241,9 +174,12 @@ class UUIDs:
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
-      gates = [None]
-      b = gates[ev.keycode-111]
-      self.new(b, pos(ev.x-b.s.w//2, ev.y-b.s.h//2))
+      gates = [None, element]
+      if len(gates) <= ev.keycode-111:
+        print('NO F',ev.keycode-111,' ELEMENT', sep='')
+      else:
+        b = gates[ev.keycode-111]
+        self.new(b, pos(ev.x-b.s.w//2, ev.y-b.s.h//2))
     if ev.keycode == 220:
       code.InteractiveConsole(vars()).interact()
     if ev.state == 0x40001:
@@ -255,7 +191,6 @@ class UUIDs:
 UUIDS = UUIDs()
 try:
   while 1:
-    UUIDS.update()
     t = time()
     while t+0.2 > time():
       UUIDS.render()
