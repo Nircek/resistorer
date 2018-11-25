@@ -78,6 +78,13 @@ class element:
   def render(self):
     self.parent.arc(self.p.x+self.s.w//2, self.p.y+self.s.h//2, min(self.s.w, self.s.h)//2, 0, 360)
 
+class verwire(element):
+  s = pos(40, 40)
+  def __str__(self):
+    return 'verwire'
+  def render(self):
+    self.parent.w.create_line(self.p.x+20, self.p.y, self.p.x+20, self.p.y+40, fill='black')
+
 class UUIDs:
   def arc(self,x,y,r,s,e, outline='black'):
     if e >= 360:
@@ -174,7 +181,7 @@ class UUIDs:
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
-      gates = [None, element]
+      gates = [None, element, verwire]
       if len(gates) <= ev.keycode-111:
         print('NO F',ev.keycode-111,' ELEMENT', sep='')
       else:
