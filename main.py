@@ -38,6 +38,13 @@ class pos:
     self.y = a[1]
     self.w = a[0]
     self.h = a[1]
+
+def pround(p, s=40):
+  p.x = round(p.x/s)*s
+  p.y = round(p.y/s)*s
+  p.w = round(p.w/s)*s
+  p.h = round(p.h/s)*s
+  return p
     
 class element:
   slots = 0
@@ -50,7 +57,7 @@ class element:
     self.UUID = -1
     self.parent = parent
     self.e = pos(-1, -1)
-    self.p = p
+    self.p = pround(p)
   def getsize(self):
     return self.s
   def onclick1(self):
@@ -58,20 +65,14 @@ class element:
   def onclick2(self):
     pass
   def motion(self, p):
-      self.p.x = p.x - self.s.w // 2
-      self.p.y = p.y - self.s.h // 2
+    self.p.x = p.x - self.s.w // 2
+    self.p.y = p.y - self.s.h // 2
+    self.p = pround(self.p)
   def onkey(self, ev):
     if  ev.x >= self.p.x and ev.x <= self.p.x+self.s.w \
     and ev.y >= self.p.y and ev.y <= self.p.y+self.s.h:
       print(self.UUID)
       if ev.keycode == 46:
-        for e in self.outs:
-          i=0
-          while i < len(e.inputs):
-            if e.inputs[i] == self.UUID:
-              del e.inputs[i]
-            else:
-              i += 1
         self.parent.rm(self.UUID)
   def __repr__(self):
     return str(vars(self))
