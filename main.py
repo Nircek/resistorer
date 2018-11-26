@@ -38,21 +38,15 @@ class pos:
     self.y = a[1]
     self.w = a[0]
     self.h = a[1]
+    self.r = (self.x, self.y)
 
-s = 40
-sh = (0,0)
 
-def pround(p, sh=sh):
+def pround(p, sh=(0,0)):
   x = lambda y,s : round(y/s)*s
-  p.x = x(p.x+sh.x, s)
-  p.y = x(p.y+sh.y, s)
-  p.h = x(p.h+sh.h, s)
-  p.w = x(p.w+sh.w, s)
-  return p
-    
+  return pos(x(p.x+sh.x, s), x(p.y+sh.y, s))
+'''
 class element:
   slots = 0
-  s = pos(s,s)
   sh = pos(0,0)
   def __str__(self):
     return 'element'
@@ -99,128 +93,68 @@ class horwire(element):
     return 'horwire'
   def render(self):
     self.parent.w.create_line(self.p.x, self.p.y, self.p.x+40, self.p.y, fill='black')
-
-class UUIDs:
-  def arc(self,x,y,r,s,e, outline='black'):
-    if e >= 360:
-      self.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,style=ARC,outline=outline)
-      self.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,style=ARC,outline=outline)
-    else:
-      self.w.create_arc(x-r,y-r,x+r,y+r,start=s,extent=e,style=ARC, outline=outline)
-  def __init__(self, WIDTH=1280, HEIGHT=720):
-    self.UUIDS = []
-    self.UUIDi = -1
+'''
+class Board:
+  def __init__(self, WIDTH=1280, HEIGHT=720, s=40):
+    self.WIDTH = WIDTH
+    self.HEIGHT = HEIGHT
+    self.s = s  # size of one element
+    self.els = {}  # elements
     self.tk = Tk()
     self.w = Canvas(self.tk, width=WIDTH, height=HEIGHT)
-    self.w.bind('<Button 1>',self.onclick1)
+    self.w.bind('<Button 1>', self.onclick1)
     self.w.bind('<ButtonRelease-1>', self.onrel1)
     self.w.bind('<B1-Motion>', self.motion1)
-    self.w.bind('<Button 3>',self.onclick2)
-    self.w.bind('<ButtonRelease-3>', self.onrel2)
-    self.w.bind('<B3-Motion>', self.motion2)
     self.w.bind('<KeyPress>',self.onkey)
     self.w.pack()
     self.w.focus_set()
     self.in_motion = None
     self.click_moved = False
-    self.selected = None
+    self.first_click = None
+    self.shift = pos(0, 0)
   def point(self, p):
     self.w.create_oval(p.x, p.y, p.x, p.y, width = 0, fill = 'black')
-  def get(self, x):
-    for e in self.UUIDS:
-      if e.UUID == x:
-        return e
-    return None
-  def rm(self, x):
-    i = 0
-    while i < len(self.UUIDS):
-      if self.UUIDS[i].UUID == x:
-        del self.UUIDS[i]
-      else:
-        i += 1
-  def new(self, c, p):
-    e = c(self, p)
-    self.UUIDi += 1
-    while self.get(self.UUIDi) is not None:
-      self.UUIDi += 1
-    e.UUID = int(self.UUIDi)
-    self.UUIDS += [e]
-    return self.UUIDi
   def render(self):
     self.w.delete('all')
-    for x in range(self.w.winfo_width()//s):
-      for y in range(self.w.winfo_height()//s):
-        self.point(pos(x*s, y*s))
-    for e in self.UUIDS:
-      e.render()
-    if self.selected is not None and self.rmc.x != -1:
-      t = self.get(self.selected)
-      self.w.create_line(t.e.x, t.e.y, self.rmc.x, self.rmc.y)
+    for x in range(self.WIDTH//self.s):
+      for y in range(self.HEIGHT//self.s):
+        self.point(pos(x*self.s, y*self.s))
+    for e, p in self.els.items():
+      p = pos(p)
+      e.render(p.x*self.s, p.y*self.s, self.s)
     self.tk.update()
   def onclick1(self, ev):
-    self.click_moved = False
-    self.in_motion = None
-    for e in self.UUIDS:
-      if  ev.x >= e.p.x and ev.x <= e.p.x+e.s.w \
-      and ev.y >= e.p.y and ev.y <= e.p.y+e.s.h:
-        self.in_motion = e.UUID
-  def onrel1(self,ev):
+    click_moved = False
+    in_motion = pos(ev.x//self.s, ev.y//self.s)
+    self.first_click = pos(ev.x, ev.y)
+  def onrel1(self, ev):
     if not self.click_moved:
-      for e in self.UUIDS:
-        if  ev.x >= e.p.x and ev.x <= e.p.x+e.s.w \
-        and ev.y >= e.p.y and ev.y <= e.p.y+e.s.h:
-          e.onclick1()
+      if in_motion in self.els and (ev.x//self.s, ev.y//self.s) != in_motion:
+        self.els[(ev.x//self.s, ev.y//self.s)] = self.els[in_motion]
+        del self.els[in_motion]
   def motion1(self, ev):
-    self.click_moved = True
-    if self.in_motion is not None:
-      self.get(self.in_motion).motion(ev)
-  def onclick2(self, ev):
-    self.click_moved = False
-    self.selected = None
-    for e in self.UUIDS:
-      if  ev.x >= e.p.x and ev.x <= e.p.x+e.s.w \
-      and ev.y >= e.p.y and ev.y <= e.p.y+e.s.h:
-        self.selected = e.UUID
-  def onrel2(self,ev):
-    if not self.click_moved:
-      for e in self.UUIDS:
-        if  ev.x >= e.p.x and ev.x <= e.p.x+e.s.w \
-        and ev.y >= e.p.y and ev.y <= e.p.y+e.s.h:
-          e.onclick2()
-    elif self.selected is not None:
-      for e in self.UUIDS:
-        if  ev.x >= e.p.x and ev.x <= e.p.x+e.s.w \
-        and ev.y >= e.p.y and ev.y <= e.p.y+e.s.h:
-          e.inputs += [self.selected]
-          self.get(self.selected).outs += [e]
-    self.rmc = pos(-1,-1)
-  def motion2(self, ev):
-    self.click_moved = True
-    self.rmc.x = ev.x
-    self.rmc.y = ev.y
+    click_moved = True
+    self.shift = pos(self.first_click.x-ev.x, self.first_click.y-ev.y)
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
-      gates = [None, element, verwire, horwire]
+      gates = [None]#, element, verwire, horwire]
       if len(gates) <= ev.keycode-111:
         print('NO F',ev.keycode-111,' ELEMENT', sep='')
       else:
         b = gates[ev.keycode-111]
-        self.new(b, pos(ev.x-b.s.w//2, ev.y-b.s.h//2))
+        self.new(b, pos(ev.x//self.s, ev.y//self.s))
     if ev.keycode == 220:
       code.InteractiveConsole(vars()).interact()
     if ev.state == 0x40001:
-      self.UUIDS = []
-      self.UUIDi = 0
-    for e in self.UUIDS:
-      e.onkey(ev)
+      pass
 
-UUIDS = UUIDs()
+board = Board()
 try:
   while 1:
     t = time()
     while t+0.2 > time():
-      UUIDS.render()
+      board.render()
 except TclError:
   # window exit
   pass
