@@ -117,9 +117,11 @@ class Board:
     self.first_click = pos(ev.x, ev.y)
   def onrel1(self, ev):
     if self.click_moved:
-      if self.in_motion in self.els.keys() and (ev.x//self.s, ev.y//self.s) != self.in_motion:
-        self.els[(ev.x//self.s, ev.y//self.s)] = self.els[self.in_motion]
-        del self.els[in_motion]
+      if self.in_motion.r in self.els.keys() and (ev.x//self.s, ev.y//self.s) != self.in_motion.r:
+        self.els[(ev.x//self.s, ev.y//self.s)] = self.els[self.in_motion.r]
+        self.els.pop(self.in_motion.r)
+    self.in_motion = pos(-1, -1)
+    self.shift = pos(0,0)
   def motion1(self, ev):
     self.click_moved = True
     self.shift = pos(ev.x-self.first_click.x, ev.y-self.first_click.y)
