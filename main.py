@@ -39,6 +39,8 @@ class pos:
     self.w = a[0]
     self.h = a[1]
     self.r = (self.x, self.y)
+  def __repr__(self):
+    return repr(self.r)
 
 
 def pround(p, sh=(0,0)):
@@ -86,11 +88,12 @@ class Board:
     self.w.bind('<KeyPress>',self.onkey)
     self.w.pack()
     self.w.focus_set()
-    self.in_motion = None
+    self.in_motion = pos(-1,-1)
     self.click_moved = False
     self.first_click = None
     self.shift = pos(0, 0)
   def new(self, cl, p):
+    print(p)
     self.els[p.r] = cl(self)
   def point(self, p):
     self.w.create_oval(p.x, p.y, p.x, p.y, width = 0, fill = 'black')
@@ -101,23 +104,25 @@ class Board:
         self.point(pos(x*self.s, y*self.s))
     for p, e in self.els.items():
       p = pos(p)
-      if p != self.in_motion:
+      print(p.r, self.in_motion.r)
+      if p.r != self.in_motion.r:
         e.render(p.x*self.s, p.y*self.s, self.s)
       else:
         e.render(p.x*self.s+self.shift.x, p.y*self.s+self.shift.y, self.s)
     self.tk.update()
   def onclick1(self, ev):
-    click_moved = False
-    in_motion = pos(ev.x//self.s, ev.y//self.s)
+    self.click_moved = False
+    self.in_motion = pos(ev.x//self.s, ev.y//self.s)
+    print(self.in_motion)
     self.first_click = pos(ev.x, ev.y)
   def onrel1(self, ev):
-    if not self.click_moved:
-      if in_motion in self.els and (ev.x//self.s, ev.y//self.s) != in_motion:
-        self.els[(ev.x//self.s, ev.y//self.s)] = self.els[in_motion]
+    if self.click_moved:
+      if self.in_motion in self.els.keys() and (ev.x//self.s, ev.y//self.s) != self.in_motion:
+        self.els[(ev.x//self.s, ev.y//self.s)] = self.els[self.in_motion]
         del self.els[in_motion]
   def motion1(self, ev):
-    click_moved = True
-    self.shift = pos(self.first_click.x-ev.x, self.first_click.y-ev.y)
+    self.click_moved = True
+    self.shift = pos(ev.x-self.first_click.x, ev.y-self.first_click.y)
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
