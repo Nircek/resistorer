@@ -57,23 +57,13 @@ class element:
     return str(vars(self))
   def render(self, x, y, s):
     self.parent.w.create_rectangle(x, y, x+s, y+s)
-'''
-class verwire(element):
-  sh=pos(s//2,0)
-  s = pos(40, 40)
-  def __str__(self):
-    return 'verwire'
-  def render(self):
-    self.parent.w.create_line(self.p.x, self.p.y, self.p.x, self.p.y+40, fill='black')
 
-class horwire(element):
-  sh=pos(0,s//2)
-  s = pos(40, 40)
+class wire(element):
   def __str__(self):
-    return 'horwire'
-  def render(self):
-    self.parent.w.create_line(self.p.x, self.p.y, self.p.x+40, self.p.y, fill='black')
-'''
+    return 'wire'
+  def render(self, x, y, s):
+    self.parent.w.create_line(x, y, x, y+40, fill='black')
+
 class Board:
   def __init__(self, WIDTH=1280, HEIGHT=720, s=40):
     self.WIDTH = WIDTH
@@ -93,7 +83,6 @@ class Board:
     self.first_click = None
     self.shift = pos(0, 0)
   def new(self, cl, p):
-    print(p)
     self.els[p.r] = cl(self)
   def point(self, p):
     self.w.create_oval(p.x, p.y, p.x, p.y, width = 0, fill = 'black')
@@ -104,7 +93,6 @@ class Board:
         self.point(pos(x*self.s, y*self.s))
     for p, e in self.els.items():
       p = pos(p)
-      print(p.r, self.in_motion.r)
       if p.r != self.in_motion.r:
         e.render(p.x*self.s, p.y*self.s, self.s)
       else:
@@ -128,7 +116,7 @@ class Board:
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
-      gates = [None, element]#, verwire, horwire]
+      gates = [None, element, wire]
       if len(gates) <= ev.keycode-111:
         print('NO F',ev.keycode-111,' ELEMENT', sep='')
       else:
