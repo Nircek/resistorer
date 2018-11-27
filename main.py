@@ -93,7 +93,7 @@ class resistor(element):
       self.parent.w.create_line(x+0.25*s,y-0.2*s,x+0.75*s,y-0.2*s)
       self.parent.w.create_line(x+0.25*s,y+0.2*s,x+0.25*s,y-0.2*s)
       self.parent.w.create_line(x+0.75*s,y+0.2*s,x+0.75*s,y-0.2*s)
-      self.parent.w.create_text(x+0.5*s,y,text="20")
+      self.parent.w.create_text(x+0.5*s,y,text="200k")
     if p == 1:
       self.parent.w.create_line(x,y,x,y+0.25*s)
       self.parent.w.create_line(x,y+0.75*s,x,y+s)
@@ -101,7 +101,7 @@ class resistor(element):
       self.parent.w.create_line(x-0.2*s,y+0.25*s,x-0.2*s,y+0.75*s)
       self.parent.w.create_line(x+0.2*s,y+0.25*s,x-0.2*s,y+0.25*s)
       self.parent.w.create_line(x+0.2*s,y+0.75*s,x-0.2*s,y+0.75*s)
-      self.parent.w.create_text(x,y+0.5*s,text="20", angle=270)
+      self.parent.w.create_text(x,y+0.5*s,text="200k", angle=270)
 
 class Board:
   def __init__(self, WIDTH=1280, HEIGHT=720, s=40):
@@ -165,6 +165,10 @@ class Board:
       code.InteractiveConsole(vars()).interact()
     if ev.state == 0x40001:  # shift + del
       self.els = {}
+    if ev.keycode == 187:
+      self.s += 1
+    if ev.keycode == 189:
+      self.s -= 1
     if pround(ev.x, ev.y, self.s).r in self.els.keys():
       if ev.keycode == 46:
         del self.els[pround(ev.x, ev.y, self.s).r]
