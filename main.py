@@ -71,8 +71,10 @@ class element:
     self.parent = parent
   def __repr__(self):
     return str(vars(self))
-  def render(self, x, y, s):
+  def render(self, x, y, s, p):
     self.parent.w.create_rectangle(x, y, x+s, y+s)
+  def onkey(self, ev):
+    pass
 
 class wire(element):
   def __str__(self):
@@ -159,8 +161,13 @@ class Board:
         self.new(b, pround(ev.x, ev.y, self.s))
     if ev.keycode == 220:
       code.InteractiveConsole(vars()).interact()
-    if ev.state == 0x40001:
-      pass
+    if ev.state == 0x40001:  # shift + del
+      self.els = {}
+    if pround(ev.x, ev.y, self.s).r in self.els.keys():
+      if ev.keycode == 46:
+        del self.els[pround(ev.x, ev.y, self.s).r]
+      else:
+        self.els[pround(ev.x, ev.y, self.s).r].onkey(ev)
 
 board = Board()
 try:
