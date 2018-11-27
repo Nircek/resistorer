@@ -36,16 +36,32 @@ class pos:
       a = a[0]
     self.x = a[0]
     self.y = a[1]
-    self.w = a[0]
-    self.h = a[1]
-    self.r = (self.x, self.y)
+    if len(a) > 2:
+      self.p = a[2]
+    else:
+      self.p = -1
+    self.r = (self.x, self.y, self.p)
   def __repr__(self):
     return repr(self.r)
 
 
-def pround(p, sh=(0,0)):
-  x = lambda y,s : round(y/s)*s
-  return pos(x(p.x+sh.x, s), x(p.y+sh.y, s))
+def pround(x, y, s):
+  x /= s
+  y /= s
+  sx = x%1-0.5
+  sy = y%1-0.5
+  x //= 1
+  y //= 1
+  if abs(sx) > abs(sy):
+    if sx < 0:
+      return pos(x, y, 1)
+    else:
+      return pos(x+1, y, 1)
+  else:
+    if sy < 0:
+      return pos(x, y, 0)
+    else:
+      return pos(x, y+1, 0)
 
 class element:
   def __str__(self):
@@ -61,8 +77,8 @@ class element:
 class wire(element):
   def __str__(self):
     return 'wire'
-  def render(self, x, y, s):
-    self.parent.w.create_line(x, y, x, y+40, fill='black')
+  def render(self, x, y, s, p):
+    self.parent.w.create_line(x, y, x if p == 1 else (x + s), y if p == 0 else (y + s))
 
 class Board:
   def __init__(self, WIDTH=1280, HEIGHT=720, s=40):
@@ -94,9 +110,9 @@ class Board:
     for p, e in self.els.items():
       p = pos(p)
       if p.r != self.in_motion.r:
-        e.render(p.x*self.s, p.y*self.s, self.s)
+        e.render(p.x*self.s, p.y*self.s, self.s, p.p)
       else:
-        e.render(p.x*self.s+self.shift.x, p.y*self.s+self.shift.y, self.s)
+        e.render(p.x*self.s+self.shift.x, p.y*self.s+self.shift.y, self.s, p.p)
     self.tk.update()
   def onclick1(self, ev):
     self.click_moved = False
@@ -106,7 +122,7 @@ class Board:
   def onrel1(self, ev):
     if self.click_moved:
       if self.in_motion.r in self.els.keys() and (ev.x//self.s, ev.y//self.s) != self.in_motion.r:
-        self.els[(ev.x//self.s, ev.y//self.s)] = self.els[self.in_motion.r]
+        self.els[pround(ev.x, ev.y, self.s)] = self.els[self.in_motion.r]
         self.els.pop(self.in_motion.r)
     self.in_motion = pos(-1, -1)
     self.shift = pos(0,0)
@@ -121,7 +137,7 @@ class Board:
         print('NO F',ev.keycode-111,' ELEMENT', sep='')
       else:
         b = gates[ev.keycode-111]
-        self.new(b, pos(ev.x//self.s, ev.y//self.s))
+        self.new(b, pround(ev.x, ev.y, self.s))
     if ev.keycode == 220:
       code.InteractiveConsole(vars()).interact()
     if ev.state == 0x40001:
