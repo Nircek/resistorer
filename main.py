@@ -93,6 +93,7 @@ class resistor(element):
       self.parent.w.create_line(x+0.25*s,y-0.2*s,x+0.75*s,y-0.2*s)
       self.parent.w.create_line(x+0.25*s,y+0.2*s,x+0.25*s,y-0.2*s)
       self.parent.w.create_line(x+0.75*s,y+0.2*s,x+0.75*s,y-0.2*s)
+      self.parent.w.create_text(x+0.5*s,y,text="20")
     if p == 1:
       self.parent.w.create_line(x,y,x,y+0.25*s)
       self.parent.w.create_line(x,y+0.75*s,x,y+s)
@@ -100,6 +101,7 @@ class resistor(element):
       self.parent.w.create_line(x-0.2*s,y+0.25*s,x-0.2*s,y+0.75*s)
       self.parent.w.create_line(x+0.2*s,y+0.25*s,x-0.2*s,y+0.25*s)
       self.parent.w.create_line(x+0.2*s,y+0.75*s,x-0.2*s,y+0.75*s)
+      self.parent.w.create_text(x,y+0.5*s,text="20", angle=270)
 
 class Board:
   def __init__(self, WIDTH=1280, HEIGHT=720, s=40):
@@ -170,12 +172,12 @@ class Board:
         self.els[pround(ev.x, ev.y, self.s).r].onkey(ev)
 
 board = Board()
-try:
+if True:#try:
   while 1:
     t = time()
     while t+0.2 > time():
       board.render()
-except TclError:
+#except TclError:
   # window exit
   pass
 # code.InteractiveConsole(vars()).interact()
