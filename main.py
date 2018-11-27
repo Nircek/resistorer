@@ -80,6 +80,25 @@ class wire(element):
   def render(self, x, y, s, p):
     self.parent.w.create_line(x, y, x if p == 1 else (x + s), y if p == 0 else (y + s))
 
+class resistor(element):
+  def __str__(self):
+    return 'resistor'
+  def render(self, x, y, s, p):
+    if p == 0:
+      self.parent.w.create_line(x,y,x+0.25*s,y)
+      self.parent.w.create_line(x+0.75*s,y,x+s,y)
+      self.parent.w.create_line(x+0.25*s,y+0.2*s,x+0.75*s,y+0.2*s)
+      self.parent.w.create_line(x+0.25*s,y-0.2*s,x+0.75*s,y-0.2*s)
+      self.parent.w.create_line(x+0.25*s,y+0.2*s,x+0.25*s,y-0.2*s)
+      self.parent.w.create_line(x+0.75*s,y+0.2*s,x+0.75*s,y-0.2*s)
+    if p == 1:
+      self.parent.w.create_line(x,y,x,y+0.25*s)
+      self.parent.w.create_line(x,y+0.75*s,x,y+s)
+      self.parent.w.create_line(x+0.2*s,y+0.25*s,x+0.2*s,y+0.75*s)
+      self.parent.w.create_line(x-0.2*s,y+0.25*s,x-0.2*s,y+0.75*s)
+      self.parent.w.create_line(x+0.2*s,y+0.25*s,x-0.2*s,y+0.25*s)
+      self.parent.w.create_line(x+0.2*s,y+0.75*s,x-0.2*s,y+0.75*s)
+
 class Board:
   def __init__(self, WIDTH=1280, HEIGHT=720, s=40):
     self.WIDTH = WIDTH
@@ -132,7 +151,7 @@ class Board:
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
-      gates = [None, element, wire]
+      gates = [None, element, wire, resistor]
       if len(gates) <= ev.keycode-111:
         print('NO F',ev.keycode-111,' ELEMENT', sep='')
       else:
