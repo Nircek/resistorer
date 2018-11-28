@@ -45,25 +45,31 @@ class pos:
     return repr(self.r)
 
 
-def pround(x, y, s):
-  x /= s
-  y /= s
-  sx = x%1-0.5
-  sy = y%1-0.5
-  x //= 1
-  y //= 1
-  if abs(sx) > abs(sy):
-    if sx < 0:
-      return pos(x, y, 1)
+def pround(x, y, s, xy):
+  if xy == 2:
+    x /= s
+    y /= s
+    sx = x%1-0.5
+    sy = y%1-0.5
+    x //= 1
+    y //= 1
+    if abs(sx) > abs(sy):
+      if sx < 0:
+        return pos(x, y, 1)
+      else:
+        return pos(x+1, y, 1)
     else:
-      return pos(x+1, y, 1)
+      if sy < 0:
+        return pos(x, y, 0)
+      else:
+        return pos(x, y+1, 0)
   else:
-    if sy < 0:
-      return pos(x, y, 0)
-    else:
-      return pos(x, y+1, 0)
+    x = ((x+0.5)//s)
+    y = ((y+0.5)//s)
+    return pos(x, y)
 
 class element:
+  xy = 1
   def __str__(self):
     return 'element'
   def __init__(self, parent):
@@ -71,12 +77,13 @@ class element:
     self.parent = parent
   def __repr__(self):
     return str(vars(self))
-  def render(self, x, y, s, p):
+  def render(self, x, y, s):
     self.parent.w.create_rectangle(x, y, x+s, y+s)
   def onkey(self, ev):
     pass
 
 class wire(element):
+  xy = 2
   def __str__(self):
     return 'wire'
   def render(self, x, y, s, p):
@@ -85,6 +92,7 @@ class wire(element):
 resistor_i = 1
 
 class resistor(element):
+  xy = 2
   def __init__(self, parent, i=None):
     self.parent = parent
     if i is None:
@@ -117,7 +125,8 @@ class Board:
     self.WIDTH = WIDTH
     self.HEIGHT = HEIGHT
     self.s = s  # size of one element
-    self.els = {}  # elements
+    self.tels = {}  # elements with (x, y, p)
+    self.oels = {}  # elements with (x, y)
     self.tk = Tk()
     self.w = Canvas(self.tk, width=WIDTH, height=HEIGHT)
     self.w.bind('<Button 1>', self.onclick1)
@@ -131,8 +140,12 @@ class Board:
     self.first_click = None
     self.shift = pos(0, 0)
   def new(self, cl, x, y):
-    p = pround(x, y, self.s)
-    self.els[p.r] = cl(self)
+    if cl.xy == 2:
+      p = pround(x, y, self.s, 2)
+      self.tels[p.r] = cl(self)
+    if cl.xy == 1:
+      p = pround(x, y, self.s, 1)
+      self.oels[p.r] = cl(self)
   def point(self, p):
     self.w.create_oval(p.x, p.y, p.x, p.y, width = 0, fill = 'black')
   def render(self):
@@ -140,12 +153,18 @@ class Board:
     for x in range(self.WIDTH//self.s):
       for y in range(self.HEIGHT//self.s):
         self.point(pos(x*self.s, y*self.s))
-    for p, e in self.els.items():
+    for p, e in self.tels.items():
       p = pos(p)
       if p.r != self.in_motion.r:
         e.render(p.x*self.s, p.y*self.s, self.s, p.p)
       else:
         e.render(p.x*self.s+self.shift.x, p.y*self.s+self.shift.y, self.s, p.p)
+    for p, e in self.oels.items():
+      p = pos(p)
+      if p.r != self.in_motion.r:
+        e.render(p.x*self.s, p.y*self.s, self.s)
+      else:
+        e.render(p.x*self.s+self.shift.x, p.y*self.s+self.shift.y, self.s)
     self.tk.update()
   def onclick1(self, ev):
     self.click_moved = False
@@ -181,16 +200,22 @@ class Board:
           e.i = resistor_i
           resistor_i += 1
     if ev.state == 0x40001:  # shift + del
-      self.els = {}
+      self.tels = {}
+      self.oels = {}
     if ev.keycode == 187:
       self.s += 1
     if ev.keycode == 189:
       self.s -= 1
-    if pround(ev.x, ev.y, self.s).r in self.els.keys():
+    if pround(ev.x, ev.y, self.s, 2).r in self.tels.keys():
       if ev.keycode == 46:
-        del self.els[pround(ev.x, ev.y, self.s).r]
+        del self.tels[pround(ev.x, ev.y, self.s, 2).r]
       else:
-        self.els[pround(ev.x, ev.y, self.s).r].onkey(ev)
+        self.tels[pround(ev.x, ev.y, self.s, 2).r].onkey(ev)
+    if pround(ev.x, ev.y, self.s, 1).r in self.oels.keys():
+      if ev.keycode == 46:
+        del self.oels[pround(ev.x, ev.y, self.s, 1).r]
+      else:
+        self.oels[pround(ev.x, ev.y, self.s, 1).r].onkey(ev)
 
 board = Board()
 if True:#try:
