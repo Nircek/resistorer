@@ -130,7 +130,8 @@ class Board:
     self.click_moved = False
     self.first_click = None
     self.shift = pos(0, 0)
-  def new(self, cl, p):
+  def new(self, cl, x, y):
+    p = pround(x, y, self.s)
     self.els[p.r] = cl(self)
   def point(self, p):
     self.w.create_oval(p.x, p.y, p.x, p.y, width = 0, fill = 'black')
@@ -169,7 +170,7 @@ class Board:
         print('NO F',ev.keycode-111,' ELEMENT', sep='')
       else:
         b = gates[ev.keycode-111]
-        self.new(b, pround(ev.x, ev.y, self.s))
+        self.new(b, ev.x, ev.y)
     if ev.keycode == 220:
       code.InteractiveConsole(vars()).interact()
     if ev.keycode == 222:
