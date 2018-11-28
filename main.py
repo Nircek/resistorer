@@ -221,7 +221,17 @@ class Board:
     self.click_moved = True
     self.shift = pos(ev.x-self.first_click.x, ev.y-self.first_click.y)
   def calc(self):
-    print('Calc')
+    start = None
+    end = None
+    for e in self.oels.keys():
+      if str(self.oels[e]) == 'apin':
+        start = pos(e)
+      if str(self.oels[e]) == 'bpin':
+        end = pos(e)
+    if start is None or end is None:
+      print('NO PINS SPECIFIED')
+      return
+    print(start,end)
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
