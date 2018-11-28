@@ -29,6 +29,7 @@ import code
 from tkinter import *
 import math
 from time import time
+import copy
 
 class pos:
   def __init__(self, *a):
@@ -238,8 +239,30 @@ class Board:
     if start is None or end is None:
       print('NO PINS SPECIFIED')
       return
-    print(start,end)
-    print(self.directions(start))
+    stack = [self.directions(start)]
+    stacki = [0]
+    r = []
+    while len(stack) != 0:
+      if len(stack[-1])>stacki[-1]:
+        cont = False
+        for e in stack[:-1]:
+          print(e[0][1], stack[-1][stacki[-1]][1])
+          if e[0][1].r == stack[-1][stacki[-1]][1].r:
+            cont = True
+        print(cont)
+        if not cont:
+          if stack[-1][stacki[-1]][1].r == end.r:
+            r += [copy.deepcopy(stack)]
+          stack += [self.directions(stack[-1][stacki[-1]][1])]
+          stacki += [0]
+          stacki[-2] += 1
+        else:
+          stacki[-1] += 1
+      else:
+        del stack[-1]
+        del stacki[-1]
+      print(stack, stacki)
+    print(r)
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
