@@ -81,11 +81,19 @@ class element:
     self.parent.w.create_rectangle(x, y, x+s, y+s)
   def onkey(self, ev):
     pass
-    
+
 class apin(element):
   xy = 1
   def __str__(self):
     return 'apin'
+  def __init__(self, parent):
+    self.parent = parent
+    d = []
+    for e in self.parent.oels.keys():
+      if str(self.parent.oels[e]) == 'apin':
+        d += [e]
+    for e in d:
+      del self.parent.oels[e]
   def render(self, x, y, s):
     r = s*0.1
     self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='green',fill='green')
@@ -97,7 +105,15 @@ class apin(element):
 class bpin(element):
   xy = 1
   def __str__(self):
-    return 'apin'
+    return 'bpin'
+  def __init__(self, parent):
+    self.parent = parent
+    d = []
+    for e in self.parent.oels.keys():
+      if str(self.parent.oels[e]) == 'bpin':
+        d += [e]
+    for e in d:
+      del self.parent.oels[e]
   def render(self, x, y, s):
     r = s*0.1
     self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='red',fill='red')
