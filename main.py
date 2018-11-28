@@ -82,7 +82,16 @@ class wire(element):
   def render(self, x, y, s, p):
     self.parent.w.create_line(x, y, x if p == 1 else (x + s), y if p == 0 else (y + s))
 
+resistor_i = 1
+
 class resistor(element):
+  def __init__(self, parent, i=None):
+    self.parent = parent
+    if i is None:
+      global resistor_i
+      i = resistor_i
+      resistor_i += 1
+    self.i = i
   def __str__(self):
     return 'resistor'
   def render(self, x, y, s, p):
@@ -93,7 +102,7 @@ class resistor(element):
       self.parent.w.create_line(x+0.25*s,y-0.2*s,x+0.75*s,y-0.2*s)
       self.parent.w.create_line(x+0.25*s,y+0.2*s,x+0.25*s,y-0.2*s)
       self.parent.w.create_line(x+0.75*s,y+0.2*s,x+0.75*s,y-0.2*s)
-      self.parent.w.create_text(x+0.5*s,y,text="200k")
+      self.parent.w.create_text(x+0.5*s,y,text=str(self.i))
     if p == 1:
       self.parent.w.create_line(x,y,x,y+0.25*s)
       self.parent.w.create_line(x,y+0.75*s,x,y+s)
@@ -101,7 +110,7 @@ class resistor(element):
       self.parent.w.create_line(x-0.2*s,y+0.25*s,x-0.2*s,y+0.75*s)
       self.parent.w.create_line(x+0.2*s,y+0.25*s,x-0.2*s,y+0.25*s)
       self.parent.w.create_line(x+0.2*s,y+0.75*s,x-0.2*s,y+0.75*s)
-      self.parent.w.create_text(x,y+0.5*s,text="200k", angle=270)
+      self.parent.w.create_text(x,y+0.5*s,text=str(self.i), angle=270)
 
 class Board:
   def __init__(self, WIDTH=1280, HEIGHT=720, s=40):
