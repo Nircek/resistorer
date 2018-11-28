@@ -65,8 +65,8 @@ def pround(x, y, s, xy):
       else:
         return pos(x, y+1, 0)
   else:
-    x = ((x+0.5)//s)
-    y = ((y+0.5)//s)
+    x = ((x+0.5*s)//s)
+    y = ((y+0.5*s)//s)
     return pos(x, y)
 
 class element:
@@ -220,12 +220,12 @@ class Board:
   def motion1(self, ev):
     self.click_moved = True
     self.shift = pos(ev.x-self.first_click.x, ev.y-self.first_click.y)
-  def directions(self, x, y):
+  def directions(self, p):
     e = []
     for sx, sy in [(-1,0),(1,0),(0,-1),(0,1)]:
-      p = pround(x*self.s+sx, y*self.s+sy, self.s, 2)
-      if p.r in self.tels:
-        e += [(p, pos(x+sx,y+sy))]
+      q = pround(p.x*self.s+sx, p.y*self.s+sy, self.s, 2)
+      if q.r in self.tels:
+        e += [(q, pos(p.x+sx,p.y+sy))]
     return e
   def calc(self):
     start = None
@@ -239,6 +239,7 @@ class Board:
       print('NO PINS SPECIFIED')
       return
     print(start,end)
+    print(self.directions(start))
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
