@@ -172,6 +172,13 @@ class Board:
         self.new(b, pround(ev.x, ev.y, self.s))
     if ev.keycode == 220:
       code.InteractiveConsole(vars()).interact()
+    if ev.keycode == 222:
+      global resistor_i
+      resistor_i = 1
+      for e in self.els.values():
+        if str(e) is 'resistor':
+          e.i = resistor_i
+          resistor_i += 1
     if ev.state == 0x40001:  # shift + del
       self.els = {}
     if ev.keycode == 187:
