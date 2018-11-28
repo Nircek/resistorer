@@ -220,6 +220,13 @@ class Board:
   def motion1(self, ev):
     self.click_moved = True
     self.shift = pos(ev.x-self.first_click.x, ev.y-self.first_click.y)
+  def directions(self, x, y):
+    e = []
+    for sx, sy in [(-1,0),(1,0),(0,-1),(0,1)]:
+      p = pround(x*self.s+sx, y*self.s+sy, self.s, 2)
+      if p.r in self.tels:
+        e += [(p, pos(x+sx,y+sy))]
+    return e
   def calc(self):
     start = None
     end = None
