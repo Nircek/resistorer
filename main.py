@@ -38,9 +38,10 @@ class pos:
     self.y = a[1]
     if len(a) > 2:
       self.p = a[2]
+      self.r = (self.x, self.y, self.p)
     else:
       self.p = -1
-    self.r = (self.x, self.y, self.p)
+      self.r = (self.x, self.y)
   def __repr__(self):
     return repr(self.r)
 
@@ -219,6 +220,8 @@ class Board:
   def motion1(self, ev):
     self.click_moved = True
     self.shift = pos(ev.x-self.first_click.x, ev.y-self.first_click.y)
+  def calc(self):
+    print('Calc')
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
@@ -228,6 +231,8 @@ class Board:
       else:
         b = gates[ev.keycode-111]
         self.new(b, ev.x, ev.y)
+    if ev.keycode == 191:
+      self.calc()
     if ev.keycode == 220:
       code.InteractiveConsole(vars()).interact()
     if ev.keycode == 222:
