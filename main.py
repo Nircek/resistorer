@@ -81,6 +81,31 @@ class element:
     self.parent.w.create_rectangle(x, y, x+s, y+s)
   def onkey(self, ev):
     pass
+    
+class apin(element):
+  xy = 1
+  def __str__(self):
+    return 'apin'
+  def render(self, x, y, s):
+    r = s*0.1
+    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='green',fill='green')
+    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='green',fill='green')
+    r *= 2
+    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='green',style=ARC)
+    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='green',style=ARC)
+    
+class bpin(element):
+  xy = 1
+  def __str__(self):
+    return 'apin'
+  def render(self, x, y, s):
+    r = s*0.1
+    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='red',fill='red')
+    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='red',fill='red')
+    r *= 2
+    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='red',style=ARC)
+    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='red',style=ARC)
+  
 
 class wire(element):
   xy = 2
@@ -184,7 +209,7 @@ class Board:
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
-      gates = [None, element, wire, resistor]
+      gates = [None, element, wire, resistor, apin, bpin]
       if len(gates) <= ev.keycode-111:
         print('NO F',ev.keycode-111,' ELEMENT', sep='')
       else:
@@ -195,7 +220,7 @@ class Board:
     if ev.keycode == 222:
       global resistor_i
       resistor_i = 1
-      for e in self.els.values():
+      for e in self.tels.values():
         if str(e) is 'resistor':
           e.i = resistor_i
           resistor_i += 1
