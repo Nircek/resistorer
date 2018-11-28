@@ -202,21 +202,18 @@ class Board:
         e.render(p.x*self.s+self.shift.x, p.y*self.s+self.shift.y, self.s, p.p)
     for p, e in self.oels.items():
       p = pos(p)
-      if p.r != self.in_motion.r:
-        e.render(p.x*self.s, p.y*self.s, self.s)
-      else:
-        e.render(p.x*self.s+self.shift.x, p.y*self.s+self.shift.y, self.s)
+      e.render(p.x*self.s, p.y*self.s, self.s)
     self.tk.update()
   def onclick1(self, ev):
     self.click_moved = False
-    self.in_motion = pos(ev.x//self.s, ev.y//self.s)
+    self.in_motion = pround(ev.x, ev.y, self.s, 2)
     print(self.in_motion)
     self.first_click = pos(ev.x, ev.y)
   def onrel1(self, ev):
     if self.click_moved:
-      if self.in_motion.r in self.els.keys() and (ev.x//self.s, ev.y//self.s) != self.in_motion.r:
-        self.els[pround(ev.x, ev.y, self.s)] = self.els[self.in_motion.r]
-        self.els.pop(self.in_motion.r)
+      if self.in_motion.r in self.tels.keys() and pround(ev.x, ev.y, self.s, 2).r != self.in_motion.r:
+        self.tels[pround(ev.x, ev.y, self.s, 2).r] = self.tels[self.in_motion.r]
+        self.tels.pop(self.in_motion.r)
     self.in_motion = pos(-1, -1)
     self.shift = pos(0,0)
   def motion1(self, ev):
