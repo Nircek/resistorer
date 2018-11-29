@@ -245,11 +245,10 @@ class Board:
     while len(stack) != 0:  # do kiedy jest stack
       if len(stack[-1])>stacki[-1]: # jeżeli to nie był ostatni element
         cont = False
-        for e in stack[:-1]:
-          #print(e[0][1], stack[-1][stacki[-1]][1])
-          if e[0][1].r == stack[-1][stacki[-1]][1].r: # sprawdź czy to jest powtórzenie, któregoś punktu
+        for e in range(len(stack[:-1])):
+          if stack[e][stacki[e]-1][1].r == stack[-1][stacki[-1]][1].r: # sprawdź czy to jest powtórzenie, któregoś punktu
             cont = True
-        #print(cont)
+        print(len(stack), stack[-1][stacki[-1]][1], cont)
         if not cont: # jeżeli nie
           if stack[-1][stacki[-1]][1].r == end.r: # to jeżeli to jest wyjście
             stacki[-1] += 1 # szukaj dalej
