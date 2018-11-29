@@ -28,7 +28,7 @@
 import code
 from tkinter import *
 import math
-from time import time
+from time import time, sleep
 import copy
 
 class pos:
@@ -278,6 +278,7 @@ class Board:
         self.shift = pos(0, -self.s*0.35)
         self.in_motion = j[0]
         self.render()
+        sleep(0.003)
       self.shift = pos(0, 0)
       self.in_motion = pos(-1,-1)
   def onkey(self, ev):
