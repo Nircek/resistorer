@@ -246,14 +246,14 @@ class Board:
       if len(stack[-1])>stacki[-1]: # jeżeli to nie był ostatni element
         cont = False
         for e in stack[:-1]:
-          print(e[0][1], stack[-1][stacki[-1]][1])
+          #print(e[0][1], stack[-1][stacki[-1]][1])
           if e[0][1].r == stack[-1][stacki[-1]][1].r: # sprawdź czy to jest powtórzenie, któregoś punktu
             cont = True
-        print(cont)
+        #print(cont)
         if not cont: # jeżeli nie
           if stack[-1][stacki[-1]][1].r == end.r: # to jeżeli to jest wyjście
-            r += [copy.deepcopy(stack)] # to zrób migawkę
-            stacki[-1] += 1 # i szukaj dalej
+            stacki[-1] += 1 # szukaj dalej
+            r += [(copy.deepcopy(stack), copy.deepcopy(stacki))] # to zrób migawkę
             continue
           stack += [self.directions(stack[-1][stacki[-1]][1])]
           stacki += [0]
@@ -263,8 +263,20 @@ class Board:
       else:
         del stack[-1]
         del stacki[-1]
-      print(stack, stacki)
+      # print(stack, stacki)
+    # print(r)
+    for e in range(len(r)):
+      for f in range(len(r[e][0])):
+        # print(r[e][0][f])
+        # print(r[e][1][f])
+        # print(r[e][0][f][r[e][1][f]-1])
+        r[e][0][f]=r[e][0][f][r[e][1][f]-1]
+      r[e]=r[e][0]
+    
     print(r)
+    for e in r:
+      for j in e:
+        print('1',j)
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
