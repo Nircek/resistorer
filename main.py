@@ -272,11 +272,15 @@ class Board:
         # print(r[e][0][f][r[e][1][f]-1])
         r[e][0][f]=r[e][0][f][r[e][1][f]-1]
       r[e]=r[e][0]
-    
     print(r)
     for e in r:
       for j in e:
         print('1',j)
+        self.shift = pos(0, -self.s*0.35)
+        self.in_motion = j[0]
+        self.render()
+      self.shift = pos(0, 0)
+      self.in_motion = pos(-1,-1)
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
