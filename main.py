@@ -242,17 +242,19 @@ class Board:
     stack = [self.directions(start)]
     stacki = [0]
     r = []
-    while len(stack) != 0:
-      if len(stack[-1])>stacki[-1]:
+    while len(stack) != 0:  # do kiedy jest stack
+      if len(stack[-1])>stacki[-1]: # jeżeli to nie był ostatni element
         cont = False
         for e in stack[:-1]:
           print(e[0][1], stack[-1][stacki[-1]][1])
-          if e[0][1].r == stack[-1][stacki[-1]][1].r:
+          if e[0][1].r == stack[-1][stacki[-1]][1].r: # sprawdź czy to jest powtórzenie, któregoś punktu
             cont = True
         print(cont)
-        if not cont:
-          if stack[-1][stacki[-1]][1].r == end.r:
-            r += [copy.deepcopy(stack)]
+        if not cont: # jeżeli nie
+          if stack[-1][stacki[-1]][1].r == end.r: # to jeżeli to jest wyjście
+            r += [copy.deepcopy(stack)] # to zrób migawkę
+            stacki[-1] += 1 # i szukaj dalej
+            continue
           stack += [self.directions(stack[-1][stacki[-1]][1])]
           stacki += [0]
           stacki[-2] += 1
