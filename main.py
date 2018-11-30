@@ -228,17 +228,7 @@ class Board:
       if q.r in self.tels:
         e += [(q, pos(p.x+sx,p.y+sy))]
     return e
-  def calc(self):
-    start = None
-    end = None
-    for e in self.oels.keys():
-      if str(self.oels[e]) == 'apin':
-        start = pos(e)
-      if str(self.oels[e]) == 'bpin':
-        end = pos(e)
-    if start is None or end is None:
-      print('NO PINS SPECIFIED')
-      return
+  def augeus(self, start, end):
     stack = [self.directions(start)]
     stacki = [0]
     r = []
@@ -271,7 +261,19 @@ class Board:
         # print(r[e][0][f][r[e][1][f]-1])
         r[e][0][f]=r[e][0][f][r[e][1][f]-1]
       r[e]=r[e][0]
-    print(r)
+    return r
+  def calc(self):
+    start = None
+    end = None
+    for e in self.oels.keys():
+      if str(self.oels[e]) == 'apin':
+        start = pos(e)
+      if str(self.oels[e]) == 'bpin':
+        end = pos(e)
+    if start is None or end is None:
+      print('NO PINS SPECIFIED')
+      return
+    r = self.augeus(start, end)
     for e in r:
       for j in e:
         print('1',j)
@@ -284,7 +286,7 @@ class Board:
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
-      gates = [None, element, wire, resistor, apin, bpin]
+      gates = [element, wire, resistor, apin, bpin]
       if len(gates) <= ev.keycode-111:
         print('NO F',ev.keycode-111,' ELEMENT', sep='')
       else:
