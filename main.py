@@ -33,18 +33,28 @@ import copy
 
 class pos:
   def __init__(self, *a):
-    if len(a) == 1:
+    while len(a) == 1:
       a = a[0]
-    self.x = a[0]
-    self.y = a[1]
+    self.x = int(a[0])
+    self.y = int(a[1])
     if len(a) > 2:
-      self.p = a[2]
-      self.r = (self.x, self.y, self.p)
+      self.p = int(a[2])
     else:
       self.p = -1
-      self.r = (self.x, self.y)
+  @property
+  def r(self):
+    return (self.x, self.y, self.p)
+  @property
+  def q(self):
+    return (self.x, self.y)
+  @r.setter
+  def r(self, r):
+    self.x, self.y, self.p = r
+  @q.setter
+  def q(self, q):
+    self.x, self.y = q
   def __repr__(self):
-    return repr(self.r)
+    return 'pos'+repr(self.r)
 
 
 def pround(x, y, s, xy):
@@ -188,7 +198,7 @@ class Board:
       self.tels[p.r] = cl(self)
     if cl.xy == 1:
       p = pround(x, y, self.s, 1)
-      self.oels[p.r] = cl(self)
+      self.oels[p.q] = cl(self)
   def point(self, p):
     self.w.create_oval(p.x, p.y, p.x, p.y, width = 0, fill = 'black')
   def render(self):
@@ -236,11 +246,11 @@ class Board:
       if len(stack[-1])>stacki[-1]: # jeżeli to nie był ostatni element
         cont = False
         for e in range(len(stack[:-1])):
-          if stack[e][stacki[e]-1][1].r == stack[-1][stacki[-1]][1].r: # sprawdź czy to jest powtórzenie, któregoś punktu
+          if stack[e][stacki[e]-1][1].q == stack[-1][stacki[-1]][1].q: # sprawdź czy to jest powtórzenie, któregoś punktu
             cont = True
         print(len(stack), stack[-1][stacki[-1]][1], cont)
         if not cont: # jeżeli nie
-          if stack[-1][stacki[-1]][1].r == end.r: # to jeżeli to jest wyjście
+          if stack[-1][stacki[-1]][1].q == end.q: # to jeżeli to jest wyjście
             stacki[-1] += 1 # szukaj dalej
             r += [(copy.deepcopy(stack), copy.deepcopy(stacki))] # to zrób migawkę
             continue
@@ -315,11 +325,11 @@ class Board:
         del self.tels[pround(ev.x, ev.y, self.s, 2).r]
       else:
         self.tels[pround(ev.x, ev.y, self.s, 2).r].onkey(ev)
-    if pround(ev.x, ev.y, self.s, 1).r in self.oels.keys():
+    if pround(ev.x, ev.y, self.s, 1).q in self.oels.keys():
       if ev.keycode == 46:
-        del self.oels[pround(ev.x, ev.y, self.s, 1).r]
+        del self.oels[pround(ev.x, ev.y, self.s, 1).q]
       else:
-        self.oels[pround(ev.x, ev.y, self.s, 1).r].onkey(ev)
+        self.oels[pround(ev.x, ev.y, self.s, 1).q].onkey(ev)
 
 board = Board()
 if True:#try:
