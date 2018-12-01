@@ -54,7 +54,10 @@ class pos:
   def q(self, q):
     self.x, self.y = q
   def __repr__(self):
-    return 'pos'+repr(self.r)
+    if self.p == -1:
+      return 'pos'+repr(self.q)
+    else:
+      return 'pos'+repr(self.r)
 
 
 def pround(x, y, s, xy):
@@ -219,7 +222,7 @@ class Board:
   def onclick1(self, ev):
     self.click_moved = False
     self.in_motion = pround(ev.x, ev.y, self.s, 2)
-    print(self.in_motion)
+    #print(self.in_motion)
     self.first_click = pos(ev.x, ev.y)
   def onrel1(self, ev):
     if self.click_moved:
@@ -248,7 +251,7 @@ class Board:
         for e in range(len(stack[:-1])):
           if stack[e][stacki[e]-1][1].q == stack[-1][stacki[-1]][1].q: # sprawdź czy to jest powtórzenie, któregoś punktu
             cont = True
-        print(len(stack), stack[-1][stacki[-1]][1], cont)
+        #print(len(stack), stack[-1][stacki[-1]][1], cont)
         if not cont: # jeżeli nie
           if stack[-1][stacki[-1]][1].q == end.q: # to jeżeli to jest wyjście
             stacki[-1] += 1 # szukaj dalej
@@ -284,15 +287,17 @@ class Board:
       print('NO PINS SPECIFIED')
       return
     r = self.augeus(start, end)
+    print(start, end='')
     for e in r:
       for j in e:
-        print('1',j)
+        print(' -',j[0],'-> ', j[1], sep='', end='')
         self.shift = pos(0, -self.s*0.35)
         self.in_motion = j[0]
         self.render()
         sleep(0.003)
       self.shift = pos(0, 0)
       self.in_motion = pos(-1,-1)
+    print()
   def onkey(self, ev):
     print(ev)
     if ev.keycode > 111 and ev.keycode < 111+13:
