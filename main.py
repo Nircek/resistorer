@@ -312,7 +312,7 @@ class Board:
       self.calc()
     if ev.keysym == 'backslash':
       code.InteractiveConsole(vars()).interact()
-    if ev.keysym == 'apostrophe':
+    if ev.keysym == 'apostrophe' or ev.keysym == 'quoteright':
       global resistor_i
       resistor_i = 1
       for e in self.tels.values():
