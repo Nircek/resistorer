@@ -203,7 +203,7 @@ class Board:
       p = pround(x, y, self.s, 1)
       self.oels[p.q] = cl(self)
   def point(self, p):
-    self.w.create_oval(p.x, p.y, p.x, p.y, width = 0, fill = 'black')
+    self.w.create_oval(p.x, p.y, p.x, p.y, width = 1, fill = 'black')
   def render(self):
     self.w.delete('all')
     for x in range(self.WIDTH//self.s):
@@ -300,38 +300,39 @@ class Board:
     print()
   def onkey(self, ev):
     print(ev)
-    if ev.keycode > 111 and ev.keycode < 111+13:
+    if len(ev.keysym)>1 and ev.keysym[:1] == 'F':
+      nr = int(ev.keysym[1:])-1
       gates = [element, wire, resistor, apin, bpin]
-      if len(gates) <= ev.keycode-111:
-        print('NO F',ev.keycode-111,' ELEMENT', sep='')
+      if len(gates) <= nr:
+        print('NO F',nr+1,' ELEMENT', sep='')
       else:
-        b = gates[ev.keycode-111]
+        b = gates[nr]
         self.new(b, ev.x, ev.y)
-    if ev.keycode == 191:
+    if ev.keysym == 'slash':
       self.calc()
-    if ev.keycode == 220:
+    if ev.keysym == 'backslash':
       code.InteractiveConsole(vars()).interact()
-    if ev.keycode == 222:
+    if ev.keysym == 'apostrophe':
       global resistor_i
       resistor_i = 1
       for e in self.tels.values():
         if str(e) is 'resistor':
           e.i = resistor_i
           resistor_i += 1
-    if ev.state == 0x40001:  # shift + del
+    if (ev.state&1)!=0 and ev.keysym == 'Delete':  # shift + del
       self.tels = {}
       self.oels = {}
-    if ev.keycode == 187:
+    if ev.keysym == 'plus':
       self.s += 1
-    if ev.keycode == 189:
+    if ev.keysym == 'minus':
       self.s -= 1
     if pround(ev.x, ev.y, self.s, 2).r in self.tels.keys():
-      if ev.keycode == 46:
+      if ev.keysym == 'Delete':
         del self.tels[pround(ev.x, ev.y, self.s, 2).r]
       else:
         self.tels[pround(ev.x, ev.y, self.s, 2).r].onkey(ev)
     if pround(ev.x, ev.y, self.s, 1).q in self.oels.keys():
-      if ev.keycode == 46:
+      if ev.keysym == 'Delete':
         del self.oels[pround(ev.x, ev.y, self.s, 1).q]
       else:
         self.oels[pround(ev.x, ev.y, self.s, 1).q].onkey(ev)
