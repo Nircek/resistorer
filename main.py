@@ -144,6 +144,9 @@ class wire(element):
     return 'wire'
   def render(self, x, y, s, p):
     self.parent.w.create_line(x, y, x if p == 1 else (x + s), y if p == 0 else (y + s))
+  @property
+  def R(self):
+    return 0
 
 resistor_i = 1
 
@@ -151,6 +154,7 @@ class resistor(element):
   xy = 2
   def __init__(self, parent, i=None):
     self.parent = parent
+    self.oR = None
     if i is None:
       global resistor_i
       i = resistor_i
@@ -175,6 +179,16 @@ class resistor(element):
       self.parent.w.create_line(x+0.2*s,y+0.25*s,x-0.2*s,y+0.25*s)
       self.parent.w.create_line(x+0.2*s,y+0.75*s,x-0.2*s,y+0.75*s)
       self.parent.w.create_text(x,y+0.5*s,text=str(self.i), angle=270)
+  @property
+  def R(self):
+    print('Podaj R',self.i,': ',sep='',end='')
+    if self.oR != None:
+      print('[',self.oR,'] ',sep='',end='')
+    a = input()
+    if a == '':
+      return self.oR
+    self.oR = float(a)
+    return float(a)
 
 class Board:
   def __init__(self, WIDTH=1280, HEIGHT=720, s=40):
