@@ -289,6 +289,16 @@ class Board:
         r[e][0][f]=r[e][0][f][r[e][1][f]-1]
       r[e]=r[e][0]
     return r
+  def augonly(self,start,end):
+    a = self.augeus(start,end)
+    s = []
+    for e in a:
+      r = []
+      for j in e:
+        if str(self.tels[j[0].r]) == 'resistor':
+          r += [j[0]]
+      s += [r]
+    return s
   def calc(self):
     start = None
     end = None
@@ -300,13 +310,13 @@ class Board:
     if start is None or end is None:
       print('NO PINS SPECIFIED')
       return
-    r = self.augeus(start, end)
+    r = self.augonly(start, end)
     print(start, end='')
     for e in r:
       for j in e:
-        print(' -',j[0],'-> ', j[1], sep='', end='')
+        print(j, ' ', sep='', end='')
         self.shift = pos(0, -self.s*0.35)
-        self.in_motion = j[0]
+        self.in_motion = j
         self.render()
         sleep(0.003)
       self.shift = pos(0, 0)
