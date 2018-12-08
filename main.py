@@ -31,6 +31,34 @@ import math
 from time import time, sleep
 import copy
 
+class Node:
+  def __init__(self):
+    data = []
+  def reset(self):
+    data = []
+  def node(self, x, y):
+    for i in range(len(data)):
+      if (x,y) in data[i]:
+        return i
+    return -1
+  def new(self, x, y, x2=-1, y2=-1):
+    q = node(x,y)
+    a = []
+    if q != -1:
+      a = data[q]
+      del data[q]
+    if x2 != -1 and y2 != -1:
+      s = node(x2,y2)
+      if s == -1:
+        print('WARN xy2 has no node')
+        data += []
+        s = len(data)-1
+    else:
+      data += []
+      s = len(data)-1
+    data[s] += [(x,y)]
+    data[s] += a
+
 class pos:
   def __init__(self, *a):
     while len(a) == 1:
