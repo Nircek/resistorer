@@ -31,33 +31,34 @@ import math
 from time import time, sleep
 import copy
 
-class Node:
-  def __init__(self):
-    data = []
-  def reset(self):
-    data = []
-  def node(self, x, y):
-    for i in range(len(data)):
-      if (x,y) in data[i]:
-        return i
-    return -1
-  def new(self, x, y, x2=-1, y2=-1):
-    q = node(x,y)
-    a = []
-    if q != -1:
-      a = data[q]
-      del data[q]
-    if x2 != -1 and y2 != -1:
-      s = node(x2,y2)
-      if s == -1:
-        print('WARN xy2 has no node')
-        data += []
-        s = len(data)-1
-    else:
-      data += []
-      s = len(data)-1
-    data[s] += [(x,y)]
-    data[s] += a
+nodes = []
+def resetNode():
+  nodes = []
+
+def searchNode(x,y):
+  for i in range(len(nodes)):
+    if (x,y) in nodes[i]:
+      return i
+
+def addNode(x,y,x2=-1,y2=-1):
+  a = searchNode(x,y)
+  b = searchNode(x2,y2)
+  i = -1
+  if a == -1 and b == -1:
+    i = len(nodes)
+    nodes += [[]]
+  elif (a == -1) + (b == -1) == 1:
+    i = a + b + 1 # a or b
+  elif a != b:
+    c = min(a,b)
+    d = max(a,b)
+    nodes[c] += nodes[d]
+    del nodes[d]
+    return
+  if not (x,y) in nodes[i]:
+    nodes[i] += [(x,y)]
+  if not (x2,y2) in nodes[i]:
+    nodes[i] += [(x2,y2)]
 
 class pos:
   def __init__(self, *a):
