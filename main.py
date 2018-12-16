@@ -317,7 +317,7 @@ class Board:
         b=searchNode(b.x, b.y)
         r += [[a, self.tels[e], b]]
     return r
-  def view(self):
+  def calc(self):
     b = self.calc_res()
     start = end = -1
     for e in self.oels.keys():
@@ -325,83 +325,12 @@ class Board:
         start = searchNode(e[0],e[1])
       if str(self.oels[e]) == 'bpin':
         end = searchNode(e[0],e[1])
+    if start == -1 or end == -1:
+      print('NO PINS SPECIFIED')
+      return
     print(start,'-->',end)
     for e in b:
       print(e)
-  def directions(self, p):
-    e = []
-    for sx, sy in [(-1,0),(1,0),(0,-1),(0,1)]:
-      q = pround(p.x*self.s+sx, p.y*self.s+sy, self.s, 2)
-      if q.r in self.tels:
-        e += [(q, pos(p.x+sx,p.y+sy))]
-    return e
-  def augeus(self, start, end):
-    stack = [self.directions(start)]
-    stacki = [0]
-    r = []
-    while len(stack) != 0:  # do kiedy jest stack
-      if len(stack[-1])>stacki[-1]: # jeżeli to nie był ostatni element
-        cont = False
-        for e in range(len(stack[:-1])):
-          if stack[e][stacki[e]-1][1].q == stack[-1][stacki[-1]][1].q: # sprawdź czy to jest powtórzenie, któregoś punktu
-            cont = True
-        #print(len(stack), stack[-1][stacki[-1]][1], cont)
-        if not cont: # jeżeli nie
-          if stack[-1][stacki[-1]][1].q == end.q: # to jeżeli to jest wyjście
-            stacki[-1] += 1 # szukaj dalej
-            r += [(copy.deepcopy(stack), copy.deepcopy(stacki))] # to zrób migawkę
-            continue
-          stack += [self.directions(stack[-1][stacki[-1]][1])]
-          stacki += [0]
-          stacki[-2] += 1
-        else:
-          stacki[-1] += 1
-      else:
-        del stack[-1]
-        del stacki[-1]
-      # print(stack, stacki)
-    # print(r)
-    for e in range(len(r)):
-      for f in range(len(r[e][0])):
-        # print(r[e][0][f])
-        # print(r[e][1][f])
-        # print(r[e][0][f][r[e][1][f]-1])
-        r[e][0][f]=r[e][0][f][r[e][1][f]-1]
-      r[e]=r[e][0]
-    return r
-  def augonly(self,start,end):
-    a = self.augeus(start,end)
-    s = []
-    for e in a:
-      r = []
-      for j in e:
-        if str(self.tels[j[0].r]) == 'resistor':
-          r += [j[0]]
-      s += [r]
-    return s
-  def calc(self):
-    start = None
-    end = None
-    for e in self.oels.keys():
-      if str(self.oels[e]) == 'apin':
-        start = pos(e)
-      if str(self.oels[e]) == 'bpin':
-        end = pos(e)
-    if start is None or end is None:
-      print('NO PINS SPECIFIED')
-      return
-    r = self.augonly(start, end)
-    print(start, end='')
-    for e in r:
-      for j in e:
-        print(j, ' ', sep='', end='')
-        self.shift = pos(0, -self.s*0.35)
-        self.in_motion = j
-        self.render()
-        sleep(0.003)
-      self.shift = pos(0, 0)
-      self.in_motion = pos(-1,-1)
-    print()
   def onkey(self, ev):
     print(ev)
     if len(ev.keysym)>1 and ev.keysym[:1] == 'F':
