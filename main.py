@@ -48,9 +48,7 @@ def addNode(x,y,x2=-1,y2=-1):
   a = searchNode(x,y)
   b = searchNode(x2,y2)
   i = -1
-  print(x,y)
   if a == -1 and b == -1:
-    print(x,y)
     i = len(nodes)
     nodes += [[]]
   elif (a == -1) + (b == -1) == 1:
@@ -61,9 +59,10 @@ def addNode(x,y,x2=-1,y2=-1):
     nodes[c] += nodes[d]
     del nodes[d]
     return
-  if not (x,y) in nodes[i]:
+  print(nodes[i])
+  if not ((x,y) in nodes[i] or x != -1 or y == -1):
     nodes[i] += [(x,y)]
-  if not (x2,y2) in nodes[i]:
+  if not ((x2,y2) in nodes[i] or x != -1 or y == -1):
     nodes[i] += [(x2,y2)]
 
 class pos:
@@ -205,6 +204,8 @@ class resistor(element):
     self.i = i
   def __str__(self):
     return 'resistor'
+  def __repr__(self):
+    return '{'+str(self.i)+'}'
   def render(self, x, y, s, p):
     if p == 0:
       self.parent.w.create_line(x,y,x+0.25*s,y)
@@ -293,12 +294,41 @@ class Board:
     self.shift = pos(ev.x-self.first_click.x, ev.y-self.first_click.y)
   def updateNode(self):
     resetNode()
+    for e in self.oels:
+      addNode(e[0], e[1])
     for e in self.tels:
       if str(self.tels[e]) == 'wire':
         a = ttoposa(pos(e))
         b = ttoposb(pos(e))
         addNode(a.x,a.y,b.x,b.y)
-    print(nodes)
+      else:
+        a = ttoposa(pos(e))
+        b = ttoposb(pos(e))
+        addNode(a.x,a.y)
+        addNode(b.x,b.y)
+    return nodes
+  def calc_res(self): # calc resistorers
+    self.updateNode()
+    r = []
+    for e in self.tels:
+      if str(self.tels[e]) == 'resistor':
+        a=ttoposa(pos(e))
+        b=ttoposb(pos(e))
+        a=searchNode(a.x, a.y)
+        b=searchNode(b.x, b.y)
+        r += [[a, self.tels[e], b]]
+    return r
+  def view(self):
+    b = self.calc_res()
+    start = end = -1
+    for e in self.oels.keys():
+      if str(self.oels[e]) == 'apin':
+        start = searchNode(e[0],e[1])
+      if str(self.oels[e]) == 'bpin':
+        end = searchNode(e[0],e[1])
+    print(start,'-->',end)
+    for e in b:
+      print(e)
   def directions(self, p):
     e = []
     for sx, sy in [(-1,0),(1,0),(0,-1),(0,1)]:
