@@ -48,6 +48,7 @@ def addNode(x,y,x2=-1,y2=-1):
   a = searchNode(x,y)
   b = searchNode(x2,y2)
   i = -1
+  print(a,b)
   if a == -1 and b == -1:
     i = len(nodes)
     nodes += [[]]
@@ -59,10 +60,10 @@ def addNode(x,y,x2=-1,y2=-1):
     nodes[c] += nodes[d]
     del nodes[d]
     return
-  print(nodes[i])
-  if not ((x,y) in nodes[i] or x != -1 or y == -1):
+  print(nodes, i, nodes[i])
+  if not (((x,y) in nodes[i]) or x != -1 or y == -1):
     nodes[i] += [(x,y)]
-  if not ((x2,y2) in nodes[i] or x != -1 or y == -1):
+  if not ((x2,y2) in nodes[i] or x2 != -1 or y2 == -1):
     nodes[i] += [(x2,y2)]
 
 class pos:
@@ -442,13 +443,14 @@ class Board:
       else:
         self.oels[pround(ev.x, ev.y, self.s, 1).q].onkey(ev)
 
-board = Board()
-if True:#try:
-  while 1:
-    t = time()
-    while t+0.2 > time():
-      board.render()
-#except TclError:
-  # window exit
-  pass
-# code.InteractiveConsole(vars()).interact()
+if __name__ == '__main__':
+  board = Board()
+  if True:#try:
+    while 1:
+      t = time()
+      while t+0.2 > time():
+        board.render()
+  #except TclError:
+    # window exit
+    pass
+  # code.InteractiveConsole(vars()).interact()
