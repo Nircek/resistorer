@@ -33,18 +33,24 @@ import copy
 
 nodes = []
 def resetNode():
+  global nodes
   nodes = []
 
 def searchNode(x,y):
+  global nodes
   for i in range(len(nodes)):
     if (x,y) in nodes[i]:
       return i
+  return -1
 
 def addNode(x,y,x2=-1,y2=-1):
+  global nodes
   a = searchNode(x,y)
   b = searchNode(x2,y2)
   i = -1
+  print(x,y)
   if a == -1 and b == -1:
+    print(x,y)
     i = len(nodes)
     nodes += [[]]
   elif (a == -1) + (b == -1) == 1:
@@ -88,6 +94,14 @@ class pos:
     else:
       return 'pos'+repr(self.r)
 
+def ttoposa(t):  # tel (two element) to pos A
+  return pos(t.x, t.y)
+
+def ttoposb(t):
+  if t.p == 0:
+    return pos(t.x+1, t.y)
+  else:
+    return pos(t.x, t.y+1)
 
 def pround(x, y, s, xy):
   if xy == 2:
@@ -277,6 +291,14 @@ class Board:
   def motion1(self, ev):
     self.click_moved = True
     self.shift = pos(ev.x-self.first_click.x, ev.y-self.first_click.y)
+  def updateNode(self):
+    resetNode()
+    for e in self.tels:
+      if str(self.tels[e]) == 'wire':
+        a = ttoposa(pos(e))
+        b = ttoposb(pos(e))
+        addNode(a.x,a.y,b.x,b.y)
+    print(nodes)
   def directions(self, p):
     e = []
     for sx, sy in [(-1,0),(1,0),(0,-1),(0,1)]:
