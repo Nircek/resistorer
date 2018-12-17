@@ -31,6 +31,12 @@ import math
 from time import time, sleep
 import copy
 
+class Primitive:
+  def __init__(self, R):
+    self.R = R
+  def __repr__(self):
+    return '['+str(self.R)+']'
+
 nodes = []
 def resetNode():
   global nodes
@@ -191,7 +197,7 @@ class wire(element):
 
 resistor_i = 1
 
-class resistor(element):
+class resistor(element, Primitive):
   xy = 2
   def __init__(self, parent, i=None):
     self.parent = parent
