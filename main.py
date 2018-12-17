@@ -214,9 +214,10 @@ class resistor(element, Primitive):
       print('[',resistor.oR,'] ',sep='',end='')
     a = input()
     if a == '':
-      return resistor.oR
+      self.R = resistor.oR
+      return
     resistor.oR = float(a)
-    return float(a)
+    self.R = float(a)
   def __str__(self):
     return 'resistor'
   def __repr__(self):
