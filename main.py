@@ -37,6 +37,31 @@ class Primitive:
   def __repr__(self):
     return '['+str(self.R)+']'
 
+class Series:
+  def __init__(self, *args):
+    pass
+  def __repr__(self):
+    pass
+  @property
+  def R(self):
+    pass
+class Parallel:
+  def __init__(self, *args):
+    pass
+  def __repr__(self):
+    pass
+  @property
+  def R(self):
+    pass
+class Delta:
+  def __init__(self, *args):
+    pass
+  def __repr__(self):
+    pass
+  @property
+  def R(self):
+    pass
+
 nodes = []
 def resetNode():
   global nodes
