@@ -26,6 +26,7 @@
 # SOFTWARE.
 
 import code
+from tkinter import simpledialog
 from tkinter import *
 import math
 from time import time, sleep
@@ -263,15 +264,12 @@ class resistor(element, Primitive):
     self.i = i
     self.getR()
   def getR(self):
-    print('Podaj R',self.i,': ',sep='',end='')
-    if resistor.oR != None:
-      print('[',resistor.oR,'] ',sep='',end='')
-    a = input()
-    if a == '':
-      self.R = resistor.oR
-      return
-    resistor.oR = float(a)
-    self.R = float(a)
+    a = None
+    while a is None:
+      a = resistor.oR
+      a = self.parent.getFloat("Podaj R" + str(self.i))
+    resistor.oR = a
+    self.R = a
   def __str__(self):
     return 'resistor'
   def __repr__(self):
@@ -430,6 +428,10 @@ class Board:
         del self.oels[pround(ev.x, ev.y, self.s, 1).q]
       else:
         self.oels[pround(ev.x, ev.y, self.s, 1).q].onkey(ev)
+  def getFloat(self, msg):
+    a = simpledialog.askfloat("Input", msg, parent=self.tk, minvalue=0.0)
+    self.w.focus_set()
+    return a
 
 if __name__ == '__main__':
   board = Board()
