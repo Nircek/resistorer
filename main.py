@@ -37,14 +37,22 @@ class Primitive:
   def __repr__(self):
     return '['+str(self.R)+']'
 
-class Series:
+class Series(Primitive):
   def __init__(self, *args):
-    pass
+    self.data = args
   def __repr__(self):
-    pass
+    r = '+('
+    for e in self.data:
+      r += repr(e)
+    r += ')'
+    return r
   @property
   def R(self):
-    pass
+    r = 0
+    for e in self.data:
+      r += e.R
+    return r
+
 class Parallel:
   def __init__(self, *args):
     pass
