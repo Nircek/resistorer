@@ -43,8 +43,8 @@ class Series(Primitive):
   def __repr__(self):
     r = '+('
     for e in self.data:
-      r += repr(e)
-    r += ')'
+      r += repr(e) + ', '
+    r = r[:-2] + ')'
     return r
   @property
   def R(self):
@@ -53,14 +53,21 @@ class Series(Primitive):
       r += e.R
     return r
 
-class Parallel:
+class Parallel(Primitive):
   def __init__(self, *args):
-    pass
+    self.data = args
   def __repr__(self):
-    pass
+    r = ':('
+    for e in self.data:
+      r += repr(e) + ', '
+    r = r[:-2] + ')'
+    return r
   @property
   def R(self):
-    pass
+    r = 0
+    for e in self.data:
+      r += 1/e.R
+    return 1/r
 class Delta:
   def __init__(self, *args):
     pass
