@@ -68,14 +68,28 @@ class Parallel(Primitive):
     for e in self.data:
       r += 1/e.R
     return 1/r
-class Delta:
-  def __init__(self, *args):
-    pass
+class Delta(Primitive):
+  def __init__(self, a, b, c, i):
+    self.a = a
+    self.b = b
+    self.c = c
+    self.i = i
   def __repr__(self):
-    pass
+    r = '\N{GREEK CAPITAL LETTER DELTA}('
+    r += self.a + ', '
+    r += self.b + ', '
+    r += self.c + ', '
+    r += self.i + ')'
+    return r
   @property
   def R(self):
-    pass
+    r = {
+      1: self.a*self.b,
+      2: self.a*self.c,
+      3: self.b*self.c
+    }[self.i]
+    r /= self.a+self.b+self.c
+    return r
 
 nodes = []
 def resetNode():
