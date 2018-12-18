@@ -76,19 +76,19 @@ class Delta(Primitive):
     self.i = i
   def __repr__(self):
     r = '\N{GREEK CAPITAL LETTER DELTA}('
-    r += self.a + ', '
-    r += self.b + ', '
-    r += self.c + ', '
-    r += self.i + ')'
+    r += repr(self.a) + ', '
+    r += repr(self.b) + ', '
+    r += repr(self.c) + ', '
+    r += repr(self.i) + ')'
     return r
   @property
   def R(self):
     r = {
-      1: self.a*self.b,
-      2: self.a*self.c,
-      3: self.b*self.c
+      1: self.a.R*self.b.R,
+      2: self.a.R*self.c.R,
+      3: self.b.R*self.c.R
     }[self.i]
-    r /= self.a+self.b+self.c
+    r /= self.a.R+self.b.R+self.c.R
     return r
 
 nodes = []
