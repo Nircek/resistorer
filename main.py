@@ -26,7 +26,7 @@
 # SOFTWARE.
 
 import code
-from tkinter import simpledialog
+from tkinter import simpledialog, messagebox
 from tkinter import *
 import math
 from time import time, sleep
@@ -70,6 +70,7 @@ class Parallel(Primitive):
     for e in self.data:
       r += 1/e.R
     return 1/r
+
 class Delta(Primitive):
   def __init__(self, a, b, c, i):
     self.a = a
@@ -92,6 +93,9 @@ class Delta(Primitive):
     }[self.i]
     r /= self.a.R+self.b.R+self.c.R
     return r
+
+def interpret(data, start, end):
+  pass
 
 nodes = []
 def resetNode():
@@ -239,7 +243,6 @@ class bpin(element):
     r *= 2
     self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='red',style=ARC)
     self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='red',style=ARC)
-  
 
 class wire(element):
   xy = 2
@@ -268,7 +271,7 @@ class resistor(element, Primitive):
     a = None
     while a is None:
       a = resistor.oR
-      a = self.parent.getFloat("Podaj R" + str(self.i))
+      a = self.parent.getFloat("Type R" + str(self.i))
     resistor.oR = a
     self.R = a
   def __str__(self):
@@ -401,18 +404,20 @@ class Board:
       if str(self.oels[e]) == 'bpin':
         end = searchNode(e[0],e[1])
     if start == -1 or end == -1:
-      print('NO PINS SPECIFIED')
+      messagebox.showerror('Error', 'NO PINS SPECIFIED')
       return
-    print(start,'-->',end)
-    for e in b:
-      print(e)
+    a = calc_res()
+    a = interpret(a, start, end)
+    messagebox.showinfo('Result', repr(a))
+    messagebox.showinfo('Result', repr(a.R))
+
   def onkey(self, ev):
     print(ev)
     if len(ev.keysym)>1 and ev.keysym[:1] == 'F':
       nr = int(ev.keysym[1:])-1
       gates = [element, wire, resistor, apin, bpin]
       if len(gates) <= nr:
-        print('NO F',nr+1,' ELEMENT', sep='')
+        messagebox.showerror('Error', 'NO F'+str(nr+1)+' ELEMENT')
       else:
         b = gates[nr]
         self.new(b, ev.x, ev.y)
