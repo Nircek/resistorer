@@ -131,13 +131,28 @@ def interpret(data, start, end):
               ndata += [[bn, Delta(data[a][1], data[b][1], data[c][1], 3), l]]
               return ndata
     return None
+  def processSeries():
+    for i in range(l):
+      if i != start and i != end:
+        d = datasearch(i)
+        if len(d) == 2:
+          a, b = n(d[0], i), n(d[1], i)
+          print(a,b)
+          ndata = without(d)
+          ndata += [[a, Series(data[d[0]][1], data[d[1]][1]), b]]
+          return ndata
+    return None
   # -----
   r = processDelta()
   if not r is None:
     ns += [[]]
     data = r
+  r = processSeries()
+  data = r if (not r is None) else data
+  r = processSeries()
+  data = r if (not r is None) else data
   print(data)
-  return Series(data[3][1],Parallel(Series(data[2][1],data[0][1]),Series(data[4][1],data[1][1])))
+  return Series(data[0][1],Parallel(data[1][1],data[2][1]))
 
 nodes = []
 def resetNode():
