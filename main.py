@@ -94,29 +94,50 @@ class Delta(Primitive):
     r /= self.a.R+self.b.R+self.c.R
     return r
 
-def datasearch(data, a, b=-1):
-  r = []
-  for i in range(len(data)):
-    if data[i][0] == a:
-      if data[i][2] == b or b == -1:
-        r += [i]
-    elif data[i][2] == a:
-      if data[i][0] == b or b == -1:
-        r += [i]
-  return r
-
 def interpret(data, start, end):
-  l = len(nodes)
-  for i in range(l):
-    for a in datasearch(data, i):
-      an = data[a][0]+data[a][2]-i
-      for b in datasearch(data, an):
-        bn = data[b][0]+data[b][2]-an
-        for c in datasearch(data, bn):
-          cn = data[c][0]+data[c][2]-bn
-          if cn == i:
-            print(i,an,bn,cn,data[a],data[b],data[c])\
-  return Series(Delta(data[0][1],data[2][1],data[3][1],2),Parallel(Series(Delta(data[0][1],data[2][1],data[3][1],1),data[1][1]),Series(Delta(data[0][1],data[2][1],data[3][1],3),data[4][1])))
+  ns = nodes[:]
+  l = len(ns)
+  # -----
+  def datasearch(a, b=-1): # search for all resistors connecting a and b
+    r = []
+    for i in range(len(data)):
+      if data[i][0] == a:
+        if data[i][2] == b or b == -1:
+          r += [i]
+      elif data[i][2] == a:
+        if data[i][0] == b or b == -1:
+          r += [i]
+    return r
+  n = lambda i, l: data[i][0]+data[i][2]-l # i. resistor connects l and ... nodes
+  def without(arr):
+    r = []
+    for e in range(len(data)):
+      if not e in arr:
+        r += [data[e]]
+    return r
+  def processDelta():
+    for i in range(l):
+      for a in datasearch(i):
+        an = n(a, i)
+        for b in datasearch(an):
+          bn = n(b, an)
+          for c in datasearch(bn):
+            cn = n(c,bn)
+            if cn == i:
+              #print(i,an,bn,cn,data[a],data[b],data[c])
+              ndata = without((an,bn,cn))
+              ndata += [[an, Delta(data[a][1], data[b][1], data[c][1], 1), l]]
+              ndata += [[cn, Delta(data[a][1], data[b][1], data[c][1], 2), l]]
+              ndata += [[bn, Delta(data[a][1], data[b][1], data[c][1], 3), l]]
+              return ndata
+    return None
+  # -----
+  r = processDelta()
+  if not r is None:
+    ns += [[]]
+    data = r
+  print(data)
+  return Series(data[3][1],Parallel(Series(data[2][1],data[0][1]),Series(data[4][1],data[1][1])))
 
 nodes = []
 def resetNode():
