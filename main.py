@@ -96,7 +96,6 @@ class Delta(Primitive):
 
 def interpret(data, start, end):
   ns = nodes[:]
-  l = len(ns)
   # -----
   def datasearch(a, b=-1): # search for all resistors connecting a and b
     r = []
@@ -116,7 +115,7 @@ def interpret(data, start, end):
         r += [data[e]]
     return r
   def processDelta():
-    for i in range(l):
+    for i in range(len(ns)):
       for a in datasearch(i):
         an = n(a, i)
         for b in datasearch(an):
@@ -126,13 +125,13 @@ def interpret(data, start, end):
             if cn == i:
               #print(i,an,bn,cn,data[a],data[b],data[c])
               ndata = without((an,bn,cn))
-              ndata += [[an, Delta(data[a][1], data[b][1], data[c][1], 1), l]]
-              ndata += [[cn, Delta(data[a][1], data[b][1], data[c][1], 2), l]]
-              ndata += [[bn, Delta(data[a][1], data[b][1], data[c][1], 3), l]]
+              ndata += [[an, Delta(data[a][1], data[b][1], data[c][1], 1), len(ns)]]
+              ndata += [[cn, Delta(data[a][1], data[b][1], data[c][1], 2), len(ns)]]
+              ndata += [[bn, Delta(data[a][1], data[b][1], data[c][1], 3), len(ns)]]
               return ndata
     return None
   def processSeries():
-    for i in range(l):
+    for i in range(len(ns)):
       if i != start and i != end:
         d = datasearch(i)
         if len(d) == 2:
@@ -160,8 +159,9 @@ def interpret(data, start, end):
   data = r if (not r is None) else data
   r = processParallel()
   data = r if (not r is None) else data
-  print(data)
-  return Series(data[0][1],data[1][1])
+  r = processSeries()
+  data = r if (not r is None) else data
+  return Series(data[0][1])
 
 nodes = []
 def resetNode():
