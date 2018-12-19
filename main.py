@@ -308,7 +308,7 @@ class Board:
     self.w.bind('<Button 1>', self.onclick1)
     self.w.bind('<ButtonRelease-1>', self.onrel1)
     self.w.bind('<B1-Motion>', self.motion1)
-    self.w.bind('<KeyPress>',self.onkey)
+    self.w.bind('<KeyPress>', self.onkey)
     self.w.pack()
     self.w.focus_set()
     self.in_motion = pos(-1,-1)
@@ -326,6 +326,10 @@ class Board:
     a, b = self.tk, self.w
     r = pickle.loads(data)
     r.tk, r.w = a, b
+    r.w.bind('<Button 1>', r.onclick1)
+    r.w.bind('<ButtonRelease-1>', r.onrel1)
+    r.w.bind('<B1-Motion>', r.motion1)
+    r.w.bind('<KeyPress>', r.onkey)
     self.newself = r
   def new(self, cl, x, y):
     if cl.xy == 2:
@@ -406,7 +410,7 @@ class Board:
     if start == -1 or end == -1:
       messagebox.showerror('Error', 'NO PINS SPECIFIED')
       return
-    a = calc_res()
+    a = self.calc_res()
     a = interpret(a, start, end)
     messagebox.showinfo('Result', repr(a))
     messagebox.showinfo('Result', repr(a.R))
@@ -456,6 +460,7 @@ class Board:
 
 if __name__ == '__main__':
   board = Board()
+  board.load(b'\x80\x03c__main__\nBoard\nq\x00)\x81q\x01}q\x02(X\x05\x00\x00\x00WIDTHq\x03M\x00\x05X\x06\x00\x00\x00HEIGHTq\x04M\xd0\x02X\x01\x00\x00\x00sq\x05K(X\x04\x00\x00\x00telsq\x06}q\x07(K\x04K\x07K\x00\x87q\x08c__main__\nresistor\nq\t)\x81q\n}q\x0b(X\x06\x00\x00\x00parentq\x0ch\x01X\x01\x00\x00\x00iq\rK\x01X\x01\x00\x00\x00Rq\x0eG@$\x00\x00\x00\x00\x00\x00ubK\x05K\x07K\x00\x87q\x0fh\t)\x81q\x10}q\x11(h\x0ch\x01h\rK\x02h\x0eG@4\x00\x00\x00\x00\x00\x00ubK\x05K\x07K\x01\x87q\x12h\t)\x81q\x13}q\x14(h\x0ch\x01h\rK\x03h\x0eG@$\x00\x00\x00\x00\x00\x00ubK\x04K\x08K\x00\x87q\x15h\t)\x81q\x16}q\x17(h\x0ch\x01h\rK\x04h\x0eG@$\x00\x00\x00\x00\x00\x00ubK\x05K\x08K\x00\x87q\x18h\t)\x81q\x19}q\x1a(h\x0ch\x01h\rK\x05h\x0eG@>\x00\x00\x00\x00\x00\x00ubK\x04K\x07K\x01\x87q\x1bc__main__\nwire\nq\x1c)\x81q\x1d}q\x1e(X\x04\x00\x00\x00addrq\x1fX\x0c\x00\x00\x007f10933b85c0q h\x0ch\x01ubK\x06K\x07K\x01\x87q!h\x1c)\x81q"}q#(h\x1fX\x0c\x00\x00\x007f10933b8470q$h\x0ch\x01ubuX\x04\x00\x00\x00oelsq%}q&(K\x04K\x08\x86q\'c__main__\napin\nq()\x81q)}q*h\x0ch\x01sbK\x06K\x08\x86q+c__main__\nbpin\nq,)\x81q-}q.h\x0ch\x01sbuX\x02\x00\x00\x00tkq/K\x00X\x01\x00\x00\x00wq0K\x00X\t\x00\x00\x00in_motionq1c__main__\npos\nq2)\x81q3}q4(X\x01\x00\x00\x00xq5J\xff\xff\xff\xffX\x01\x00\x00\x00yq6J\xff\xff\xff\xffX\x01\x00\x00\x00pq7J\xff\xff\xff\xffubX\x0b\x00\x00\x00click_movedq8\x88X\x0b\x00\x00\x00first_clickq9h2)\x81q:}q;(h5M\xc2\x01h6M{\x01h7J\xff\xff\xff\xffubX\x05\x00\x00\x00shiftq<h2)\x81q=}q>(h5K\x00h6K\x00h7J\xff\xff\xff\xffubX\x07\x00\x00\x00newselfq?\x89ub.')
   if True:#try:
     while 1:
       t = time()
