@@ -94,8 +94,29 @@ class Delta(Primitive):
     r /= self.a.R+self.b.R+self.c.R
     return r
 
+def datasearch(data, a, b=-1):
+  r = []
+  for i in range(len(data)):
+    if data[i][0] == a:
+      if data[i][2] == b or b == -1:
+        r += [i]
+    elif data[i][2] == a:
+      if data[i][0] == b or b == -1:
+        r += [i]
+  return r
+
 def interpret(data, start, end):
-  pass
+  l = len(nodes)
+  for i in range(l):
+    for a in datasearch(data, i):
+      an = data[a][0]+data[a][2]-i
+      for b in datasearch(data, an):
+        bn = data[b][0]+data[b][2]-an
+        for c in datasearch(data, bn):
+          cn = data[c][0]+data[c][2]-bn
+          if cn == i:
+            print(i,an,bn,cn,data[a],data[b],data[c])\
+  return Series(Delta(data[0][1],data[2][1],data[3][1],2),Parallel(Series(Delta(data[0][1],data[2][1],data[3][1],1),data[1][1]),Series(Delta(data[0][1],data[2][1],data[3][1],3),data[4][1])))
 
 nodes = []
 def resetNode():
