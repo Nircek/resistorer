@@ -31,6 +31,7 @@ from tkinter import *
 import math
 from time import time, sleep
 import copy
+import pickle
 
 class Primitive:
   def __init__(self, R):
@@ -311,6 +312,18 @@ class Board:
     self.click_moved = False
     self.first_click = None
     self.shift = pos(0, 0)
+    self.newself = False
+  def dump(self):
+    a, b = self.tk, self.w
+    self.tk, self.w = 0, 0
+    r = pickle.dumps(self)
+    self.tk, self.w = a, b
+    return r
+  def load(self, data):
+    a, b = self.tk, self.w
+    r = pickle.loads(data)
+    r.tk, r.w = a, b
+    self.newself = r
   def new(self, cl, x, y):
     if cl.xy == 2:
       p = pround(x, y, self.s, 2)
@@ -335,6 +348,9 @@ class Board:
       p = pos(p)
       e.render(p.x*self.s, p.y*self.s, self.s)
     self.tk.update()
+    if self.newself:
+      return self.newself
+    return self
   def onclick1(self, ev):
     self.click_moved = False
     self.in_motion = pround(ev.x, ev.y, self.s, 2)
@@ -439,7 +455,7 @@ if __name__ == '__main__':
     while 1:
       t = time()
       while t+0.2 > time():
-        board.render()
+        board = board.render()
   #except TclError:
     # window exit
     pass
