@@ -137,9 +137,16 @@ def interpret(data, start, end):
         d = datasearch(i)
         if len(d) == 2:
           a, b = n(d[0], i), n(d[1], i)
-          print(a,b)
           ndata = without(d)
           ndata += [[a, Series(data[d[0]][1], data[d[1]][1]), b]]
+          return ndata
+    return None
+  def processParallel():
+    for e in range(len(data)):
+      for f in range(len(data)):
+        if e != f and (data[e][0] == data[f][0] and data[e][2] == data[f][2]) or (data[e][0] == data[f][2] and data[e][2] == data[f][0]):
+          ndata = without((e,f))
+          ndata += [[data[e][0], Parallel(data[e][1], data[f][1]), data[e][2]]]
           return ndata
     return None
   # -----
@@ -151,8 +158,10 @@ def interpret(data, start, end):
   data = r if (not r is None) else data
   r = processSeries()
   data = r if (not r is None) else data
+  r = processParallel()
+  data = r if (not r is None) else data
   print(data)
-  return Series(data[0][1],Parallel(data[1][1],data[2][1]))
+  return Series(data[0][1],data[1][1])
 
 nodes = []
 def resetNode():
