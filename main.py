@@ -159,20 +159,16 @@ def interpret(data, start, end):
         rmvd += i
     return without(rmvd) if rmvd else None
   # -----
-  r = processUnnecessary()
-  data = r if (not r is None) else data
+  q = lambda x: x if (not x is None) else data
+  data = q(processUnnecessary())
   r = processDelta()
   if not r is None:
     ns += [[]]
     data = r
-  r = processSeries()
-  data = r if (not r is None) else data
-  r = processSeries()
-  data = r if (not r is None) else data
-  r = processParallel()
-  data = r if (not r is None) else data
-  r = processSeries()
-  data = r if (not r is None) else data
+  data = q(processSeries())
+  data = q(processSeries())
+  data = q(processParallel())
+  data = q(processSeries())
   return Series(data[0][1])
 
 nodes = []
