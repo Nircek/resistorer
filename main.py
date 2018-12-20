@@ -124,7 +124,7 @@ def interpret(data, start, end):
             cn = n(c,bn)
             if cn == i:
               #print(i,an,bn,cn,data[a],data[b],data[c])
-              ndata = without((an,bn,cn))
+              ndata = without((a,b,c))
               ndata += [[an, Delta(data[a][1], data[b][1], data[c][1], 1), len(ns)]]
               ndata += [[cn, Delta(data[a][1], data[b][1], data[c][1], 2), len(ns)]]
               ndata += [[bn, Delta(data[a][1], data[b][1], data[c][1], 3), len(ns)]]
