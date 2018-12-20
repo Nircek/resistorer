@@ -148,7 +148,19 @@ def interpret(data, start, end):
           ndata += [[data[e][0], Parallel(data[e][1], data[f][1]), data[e][2]]]
           return ndata
     return None
+  def processUnnecessary():
+    rmvd = []
+    for i in range(len(ns)):
+      a = datasearch(i)
+      if len(a) == 1:
+        rmvd += a
+    for i in range(len(data)):
+      if data[i][0] == data[i][2]:
+        rmvd += i
+    return without(rmvd) if rmvd else None
   # -----
+  r = processUnnecessary()
+  data = r if (not r is None) else data
   r = processDelta()
   if not r is None:
     ns += [[]]
