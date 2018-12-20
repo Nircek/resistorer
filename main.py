@@ -355,7 +355,7 @@ class resistor(element, Primitive):
     a = None
     while a is None:
       a = resistor.oR
-      a = self.parent.getFloat("Type R" + str(self.i))
+      a = self.parent.getFloat("Value of R" + str(self.i) + " [\N{OHM SIGN}]")
     resistor.oR = a
     self.R = a
   def __str__(self):
