@@ -151,25 +151,35 @@ def interpret(data, start, end):
   def processUnnecessary():
     rmvd = []
     for i in range(len(ns)):
-      a = datasearch(i)
-      if len(a) == 1:
-        rmvd += a
+      if i != start and i != end:
+        a = datasearch(i)
+        if len(a) == 1:
+          rmvd += a
     for i in range(len(data)):
       if data[i][0] == data[i][2]:
-        rmvd += i
+        rmvd += [i]
     return without(rmvd) if rmvd else None
   # -----
+  toProcess = [processUnnecessary, processSeries, processParallel, processDelta]
+  odata = []
   q = lambda x: x if (not x is None) else data
-  data = q(processUnnecessary())
-  r = processDelta()
-  if not r is None:
-    ns += [[]]
-    data = r
-  data = q(processSeries())
-  data = q(processSeries())
-  data = q(processParallel())
-  data = q(processSeries())
-  return Series(data[0][1])
+  while odata != data:
+    odata = data[:]
+    print(odata)
+    for i in range(len(toProcess)):
+      r = toProcess[i]()
+      if not r is None:
+        data = r
+        if toProcess[i] == processDelta:
+          ns += [[]]
+        break
+  if not data:
+    if start == end:
+      return Primitive(0)
+    return Primitive(math.inf)
+  if len(data) == 1:
+    return data[0][1]
+  raise Error()
 
 nodes = []
 def resetNode():
