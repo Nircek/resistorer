@@ -435,6 +435,7 @@ class Board:
         e.render(p.x*self.s, p.y*self.s, self.s, p.p)
       else:
         e.render(p.x*self.s+self.shift.x, p.y*self.s+self.shift.y, self.s, p.p)
+        self.w.create_text(0,self.HEIGHT,anchor='sw',text=str(e.R))
     for p, e in self.oels.items():
       p = pos(p)
       e.render(p.x*self.s, p.y*self.s, self.s)
