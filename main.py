@@ -281,6 +281,9 @@ class element:
   def __init__(self, parent):
     self.addr = super().__repr__().split('0x')[1][:-1]
     self.parent = parent
+  @property
+  def info(self):
+    return {}
   def __repr__(self):
     return str(vars(self))
   def render(self, x, y, s):
@@ -358,6 +361,9 @@ class resistor(element, Primitive):
       a = self.parent.getFloat("Value of R" + str(self.i) + " [\N{OHM SIGN}]")
     resistor.oR = a
     self.R = a
+  @property
+  def info(self):
+    return {'R': self.R}
   def __str__(self):
     return 'resistor'
   def __repr__(self):
@@ -435,7 +441,10 @@ class Board:
         e.render(p.x*self.s, p.y*self.s, self.s, p.p)
       else:
         e.render(p.x*self.s+self.shift.x, p.y*self.s+self.shift.y, self.s, p.p)
-        self.w.create_text(0,self.HEIGHT,anchor='sw',text=str(e.R))
+        txt=''
+        for k, v in e.info.items():
+          txt += str(k) + ' -> ' + str(v) + '\n'
+        self.w.create_text(0,self.HEIGHT,anchor='sw',text=txt)
     for p, e in self.oels.items():
       p = pos(p)
       e.render(p.x*self.s, p.y*self.s, self.s)
