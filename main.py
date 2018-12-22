@@ -38,6 +38,30 @@ class Primitive:
     self.R = R
   def __repr__(self):
     return '['+str(self.R)+']'
+  @property
+  def I(self):
+    try:
+      return self._I
+    except AttributeError:
+      return 0
+  @property
+  def U(self):
+    try:
+      return self._U
+    except AttributeError:
+      return 0
+  def updateR(self):
+    pass
+  @I.setter
+  def I(self, x):
+    self._I = x
+    self._U = self.R * x
+    self.updateR()
+  @U.setter
+  def U(self, x):
+    self._U = x
+    self._I = x / self.R
+    self.updateR()
 
 class Series(Primitive):
   def __init__(self, *args):
@@ -54,6 +78,9 @@ class Series(Primitive):
     for e in self.data:
       r += e.R
     return r
+  def updateR(self):
+    for e in self.data:
+      e.I = self.I
 
 class Parallel(Primitive):
   def __init__(self, *args):
@@ -70,6 +97,9 @@ class Parallel(Primitive):
     for e in self.data:
       r += 1/e.R
     return 1/r
+  def updateR(self):
+    for e in self.data:
+      e.U = self.U
 
 class Delta(Primitive):
   def __init__(self, a, b, c, i):
@@ -363,7 +393,10 @@ class resistor(element, Primitive):
     self.R = a
   @property
   def info(self):
-    return {'R': self.R}
+    if self.I and self.U:
+      return {'R': self.R, 'U': self.U, 'I': self.I}
+    else:
+      return {'R': self.R}
   def __str__(self):
     return 'resistor'
   def __repr__(self):
@@ -508,6 +541,7 @@ class Board:
     a = interpret(a, start, end)
     messagebox.showinfo('Result', repr(a))
     messagebox.showinfo('Result', repr(a.R))
+    a.U = 12
 
   def onkey(self, ev):
     print(ev)
