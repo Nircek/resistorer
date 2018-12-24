@@ -440,6 +440,8 @@ class Board:
     self.first_click = None
     self.shift = pos(0, 0)
     self.newself = False
+    self.x = 0
+    self.y = 0
   def configure(self, ev):
     self.SIZE.x = ev.width
     self.SIZE.y = ev.height
@@ -470,41 +472,42 @@ class Board:
     self.w.create_oval(p.x, p.y, p.x, p.y, width = 1, fill = 'black')
   def render(self):
     self.w.delete('all')
-    for x in range(self.SIZE.x//self.s+1):
-      for y in range(self.SIZE.y//self.s+1):
-        self.point(pos(x*self.s, y*self.s))
+    for x in range(self.x//self.s, (self.SIZE.x+self.x)//self.s+1):
+      for y in range(self.y//self.s, (self.SIZE.y+self.y)//self.s+1):
+        self.point(pos(x*self.s-self.x, y*self.s-self.y))
     for p, e in self.tels.items():
       p = pos(p)
       if p.r != self.in_motion.r:
-        e.render(p.x*self.s, p.y*self.s, self.s, p.p)
+        e.render(p.x*self.s-self.x, p.y*self.s-self.y, self.s, p.p)
       else:
-        e.render(p.x*self.s+self.shift.x, p.y*self.s+self.shift.y, self.s, p.p)
+        e.render(self.shift.x-self.x, self.shift.y-self.y, self.s, p.p)
         txt=''
         for k, v in e.info.items():
           txt += str(k) + ' -> ' + str(v) + '\n'
-        self.w.create_text(0,self.HEIGHT,anchor='sw',text=txt)
+        self.w.create_text(0,self.SIZE.y,anchor='sw',text=txt)
     for p, e in self.oels.items():
       p = pos(p)
-      e.render(p.x*self.s, p.y*self.s, self.s)
+      e.render(p.x*self.s-self.x, p.y*self.s-self.y, self.s)
     self.tk.update()
     if self.newself:
       return self.newself
     return self
   def onclick1(self, ev):
     self.click_moved = False
-    self.in_motion = pround(ev.x, ev.y, self.s, 2)
+    self.in_motion = pround(ev.x+self.x, ev.y+self.y, self.s, 2)
     #print(self.in_motion)
     self.first_click = pos(ev.x, ev.y)
+    self.first_view = pos(self.x, self.y)
   def onrel1(self, ev):
     if self.click_moved:
       if self.in_motion.r in self.tels.keys() and pround(ev.x, ev.y, self.s, 2).r != self.in_motion.r:
-        self.tels[pround(ev.x, ev.y, self.s, 2).r] = self.tels[self.in_motion.r]
+        self.tels[pround(ev.x+self.x, ev.y+self.y, self.s, 2).r] = self.tels[self.in_motion.r]
         self.tels.pop(self.in_motion.r)
     self.in_motion = pos(-1, -1)
-    self.shift = pos(0,0)
+    self.shift = pos(-1,-1)
   def motion1(self, ev):
     self.click_moved = True
-    self.shift = pos(ev.x-self.first_click.x, ev.y-self.first_click.y)
+    self.shift = pos(ev.x+self.x, ev.y+self.y)
   def updateNode(self):
     resetNode()
     for e in self.oels:
@@ -550,6 +553,8 @@ class Board:
 
   def onkey(self, ev):
     print(ev)
+    ev.x += self.x
+    ev.y += self.y
     if len(ev.keysym)>1 and ev.keysym[:1] == 'F':
       nr = int(ev.keysym[1:])-1
       gates = [element, wire, resistor, apin, bpin]
@@ -576,6 +581,14 @@ class Board:
       self.s += 1
     if ev.keysym == 'minus':
       self.s -= 1
+    if ev.keysym == 'Left':
+      self.x -= 1
+    if ev.keysym == 'Right':
+      self.x += 1
+    if ev.keysym == 'Up':
+      self.y -= 1
+    if ev.keysym == 'Down':
+      self.y += 1
     if pround(ev.x, ev.y, self.s, 2).r in self.tels.keys():
       if ev.keysym == 'Delete':
         del self.tels[pround(ev.x, ev.y, self.s, 2).r]
