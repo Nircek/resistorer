@@ -577,10 +577,15 @@ class Board:
     if (ev.state&1)!=0 and ev.keysym == 'Delete':  # shift + del
       self.tels = {}
       self.oels = {}
+    s = self.s
     if ev.keysym == 'plus':
       self.s += 1
+      self.x += self.x//s
+      self.y += self.y//s
     if ev.keysym == 'minus':
       self.s -= 1
+      self.x += self.x//s
+      self.y += self.y//s
     if ev.keysym == 'Left':
       self.x -= 1
     if ev.keysym == 'Right':
