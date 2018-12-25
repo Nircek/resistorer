@@ -512,16 +512,19 @@ class Board:
     for x in range(self.x//self.s, (self.SIZE.x+self.x)//self.s+1):
       for y in range(self.y//self.s, (self.SIZE.y+self.y)//self.s+1):
         self.point(pos(x*self.s-self.x, y*self.s-self.y))
+    txt = ''
     for p, e in self.tels.items():
+      if str(e) == 'resistor':
+        txt += repr(e)
+        for f, g in e.info.items():
+          txt += ' ' + f + '=' + str(g)
+        txt += '\n'
       p = pos(p)
       if p.r != self.in_motion.r:
         e.render(p.x*self.s-self.x, p.y*self.s-self.y, self.s, p.p)
       else:
         e.render(self.newpos.x-self.shift.x, self.newpos.y-self.shift.y, self.s, p.p)
-        txt=''
-        for k, v in e.info.items():
-          txt += str(k) + ' -> ' + str(v) + '\n'
-        self.w.create_text(0,self.SIZE.y,anchor='sw',text=txt)
+    self.w.create_text(0,self.SIZE.y,anchor='sw',text=txt)
     for p, e in self.oels.items():
       p = pos(p)
       e.render(p.x*self.s-self.x, p.y*self.s-self.y, self.s)
