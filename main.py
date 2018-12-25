@@ -516,15 +516,21 @@ class Board:
     for p, e in self.tels.items():
       if str(e) == 'resistor':
         txt += repr(e)
+        first = True
         for f, g in e.info.items():
-          txt += ' ' + f + '=' + str(g)
-        txt += '\n'
+          if first:
+            txt += ' ' + f + '=' + str(g) + '\n'
+            first = False
+          else:
+            txt += (len(repr(e))+1)*' ' + f + '=' + str(g) + '\n'
+        if txt[-1] != '\n':
+          txt += '\n'
       p = pos(p)
       if p.r != self.in_motion.r:
         e.render(p.x*self.s-self.x, p.y*self.s-self.y, self.s, p.p)
       else:
         e.render(self.newpos.x-self.shift.x, self.newpos.y-self.shift.y, self.s, p.p)
-    self.w.create_text(0,self.SIZE.y,anchor='sw',text=txt)
+    self.w.create_text(0,self.SIZE.y,font='TkFixedFont',anchor='sw',text=txt)
     for p, e in self.oels.items():
       p = pos(p)
       e.render(p.x*self.s-self.x, p.y*self.s-self.y, self.s)
