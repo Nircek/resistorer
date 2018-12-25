@@ -39,17 +39,20 @@ class Primitive:
   def __repr__(self):
     return '['+str(self.R)+']'
   @property
+  def cs(self): # components
+    return []
+  @property
   def I(self):
     try:
       return self._I
     except AttributeError:
-      return 0
+      return None
   @property
   def U(self):
     try:
       return self._U
     except AttributeError:
-      return 0
+      return None
   def updateR(self):
     pass
   @I.setter
@@ -73,6 +76,9 @@ class Series(Primitive):
     r = r[:-2] + ')'
     return r
   @property
+  def cs(self): # components
+    return self.data
+  @property
   def R(self):
     r = 0
     for e in self.data:
@@ -91,6 +97,9 @@ class Parallel(Primitive):
       r += repr(e) + ', '
     r = r[:-2] + ')'
     return r
+  @property
+  def cs(self): # components
+    return self.data
   @property
   def R(self):
     r = 0
@@ -115,6 +124,9 @@ class Delta(Primitive):
     r += repr(self.i) + ')'
     return r
   @property
+  def cs(self): # components
+    return [self.x,self.y,self.z]
+  @property
   def R(self):
     r = {
       1: self.x.R*self.y.R,
@@ -125,7 +137,7 @@ class Delta(Primitive):
     return r
 
 def interpret(data, start, end):
-  ns = nodes[:]
+  global nodes
   # -----
   def datasearch(a, b=-1): # search for all resistors connecting a and b
     r = []
@@ -145,7 +157,7 @@ def interpret(data, start, end):
         r += [data[e]]
     return r
   def processDelta():
-    for i in range(len(ns)):
+    for i in range(len(nodes)):
       for a in datasearch(i):
         an = n(a, i)
         for b in datasearch(an):
@@ -159,12 +171,12 @@ def interpret(data, start, end):
               db = Delta(data[a], data[b], data[c], 2)
               dc = Delta(data[a], data[b], data[c], 3)
               da.a, db.a, dc.a = an, cn, bn
-              da.b, db.b, dc.b = len(ns), len(ns), len(ns)
+              da.b, db.b, dc.b = len(nodes), len(nodes), len(nodes)
               ndata += [da, db, dc]
               return ndata
     return None
   def processSeries():
-    for i in range(len(ns)):
+    for i in range(len(nodes)):
       if i != start and i != end:
         d = datasearch(i)
         if len(d) == 2:
@@ -186,7 +198,7 @@ def interpret(data, start, end):
     return None
   def processUnnecessary():
     rmvd = []
-    for i in range(len(ns)):
+    for i in range(len(nodes)):
       if i != start and i != end:
         a = datasearch(i)
         if len(a) == 1:
@@ -207,7 +219,7 @@ def interpret(data, start, end):
       if not r is None:
         data = r
         if toProcess[i] == processDelta:
-          ns += [[]]
+          nodes += [[]]
         break
   if not data:
     if start == end:
@@ -217,6 +229,28 @@ def interpret(data, start, end):
     return data[0]
   raise Error()
 
+nv = [] # nodes_voltages
+def calc_voltages(c, u): # calced
+  global nv
+  def cv(d): # calc voltage(data)
+    for e in d.cs:
+      cv(e)
+    print(repr(d), d.U, nv[d.a], nv[d.b])
+    if (not d.U is None) and ((nv[d.a] is None) != (nv[d.b] is None)): # '!=' = 'xor'
+      if nv[d.a] is None:
+        nv[d.a] = nv[d.b] + d.U
+      else:
+        nv[d.b] = nv[d.a] + d.U
+    elif d.U is None and (not ((nv[d.a] is None) or (nv[d.b] is None))):
+      d.U = abs(nv[d.a]-nv[d.b])
+    print(d, d.U, nv[d.a], nv[d.b])
+  nv = []
+  for e in range(len(nodes)):
+    nv += [None]
+  nv[c.a] = 0
+  #nv[c.b] = u
+  c.U = u
+  cv(c)
 nodes = []
 def resetNode():
   global nodes
@@ -557,7 +591,7 @@ class Board:
     a = interpret(a, start, end)
     messagebox.showinfo('Result', repr(a))
     messagebox.showinfo('Result', repr(a.R))
-    a.U = 12
+    calc_voltages(a, 12)
 
   def onkey(self, ev):
     print(ev)
