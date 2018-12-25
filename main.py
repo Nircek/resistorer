@@ -259,24 +259,27 @@ class Nodes:
     raise Error()
   def calc_voltages(self, c, u): # calced
     def cv(p, d): # calc voltage(parent, data)
+      r = False
       for e in d.cs:
-        cv(p,e)
-      print(repr(d), d.U, p.nv[d.a], p.nv[d.b])
-      if (not d.U is None) and ((p.nv[d.a] is None) != (p.nv[d.b] is None)): # '!=' = 'xor'
+        r = cv(p,e)
+      if (not d.U is None) and ((p.nv[d.a] is None) != (p.nv[d.b] is None)) and d.a != c.b and d.b != c.b: # '!=' = 'xor'
         if p.nv[d.a] is None:
           p.nv[d.a] = p.nv[d.b] + d.U
         else:
           p.nv[d.b] = p.nv[d.a] + d.U
+        return True
       elif d.U is None and (not ((p.nv[d.a] is None) or (p.nv[d.b] is None))):
         d.U = abs(p.nv[d.a]-p.nv[d.b])
-      print(d, d.U, p.nv[d.a], p.nv[d.b])
+        return True
+      return r
     self.nv = []
     for e in range(len(self.nodes)):
       self.nv += [None]
     self.nv[c.a] = 0
     #nv[c.b] = u
     c.U = u
-    cv(self, c)
+    while cv(self, c):
+      pass
 
 class pos:
   def __init__(self, *a):
@@ -427,7 +430,7 @@ class resistor(element, Primitive):
     self.R = a
   @property
   def info(self):
-    if self.I and self.U:
+    if (not self.I is None) and (not self.U is None):
       return {'R': self.R, 'U': self.U, 'I': self.I}
     else:
       return {'R': self.R}
