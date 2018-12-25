@@ -139,6 +139,7 @@ class Delta(Primitive):
 class Nodes:
   def __init__(self):
     self.nodes = []
+    self.nv = []
   def resetNode(self):
     self.nodes = []
   def searchNode(self,x,y):
@@ -166,7 +167,6 @@ class Nodes:
     if not ((x2,y2) in self.nodes[i] or x2 == -1 or y2 == -1):
       self.nodes[i] += [(x2,y2)]
   def interpret(self, data, start, end):
-    ns = self.nodes[:]
     # -----
     def datasearch(a, b=-1): # search for all resistors connecting a and b
       r = []
@@ -186,7 +186,7 @@ class Nodes:
           r += [data[e]]
       return r
     def processDelta():
-      for i in range(len(ns)):
+      for i in range(len(self.nodes)):
         for a in datasearch(i):
           an = n(a, i)
           for b in datasearch(an):
@@ -200,12 +200,12 @@ class Nodes:
                 db = Delta(data[a], data[b], data[c], 2)
                 dc = Delta(data[a], data[b], data[c], 3)
                 da.a, db.a, dc.a = an, cn, bn
-                da.b, db.b, dc.b = len(ns), len(ns), len(ns)
+                da.b, db.b, dc.b = len(self.nodes), len(self.nodes), len(self.nodes)
                 ndata += [da, db, dc]
                 return ndata
       return None
     def processSeries():
-      for i in range(len(ns)):
+      for i in range(len(self.nodes)):
         if i != start and i != end:
           d = datasearch(i)
           if len(d) == 2:
@@ -227,7 +227,7 @@ class Nodes:
       return None
     def processUnnecessary():
       rmvd = []
-      for i in range(len(ns)):
+      for i in range(len(self.nodes)):
         if i != start and i != end:
           a = datasearch(i)
           if len(a) == 1:
@@ -248,7 +248,7 @@ class Nodes:
         if not r is None:
           data = r
           if toProcess[i] == processDelta:
-            ns += [[]]
+            self.nodes += [[]]
           break
     if not data:
       if start == end:
@@ -257,29 +257,26 @@ class Nodes:
     if len(data) == 1:
       return data[0]
     raise Error()
-    
-  nv = [] # nodes_voltages
-  def calc_voltages(c, u): # calced
-    global nv
-    def cv(d): # calc voltage(data)
+  def calc_voltages(self, c, u): # calced
+    def cv(p, d): # calc voltage(parent, data)
       for e in d.cs:
-        cv(e)
-      print(repr(d), d.U, nv[d.a], nv[d.b])
-      if (not d.U is None) and ((nv[d.a] is None) != (nv[d.b] is None)): # '!=' = 'xor'
-        if nv[d.a] is None:
-          nv[d.a] = nv[d.b] + d.U
+        cv(p,e)
+      print(repr(d), d.U, p.nv[d.a], p.nv[d.b])
+      if (not d.U is None) and ((p.nv[d.a] is None) != (p.nv[d.b] is None)): # '!=' = 'xor'
+        if p.nv[d.a] is None:
+          p.nv[d.a] = p.nv[d.b] + d.U
         else:
-          nv[d.b] = nv[d.a] + d.U
-      elif d.U is None and (not ((nv[d.a] is None) or (nv[d.b] is None))):
-        d.U = abs(nv[d.a]-nv[d.b])
-      print(d, d.U, nv[d.a], nv[d.b])
-    nv = []
-    for e in range(len(nodes)):
-      nv += [None]
-    nv[c.a] = 0
+          p.nv[d.b] = p.nv[d.a] + d.U
+      elif d.U is None and (not ((p.nv[d.a] is None) or (p.nv[d.b] is None))):
+        d.U = abs(p.nv[d.a]-p.nv[d.b])
+      print(d, d.U, p.nv[d.a], p.nv[d.b])
+    self.nv = []
+    for e in range(len(self.nodes)):
+      self.nv += [None]
+    self.nv[c.a] = 0
     #nv[c.b] = u
     c.U = u
-    cv(c)
+    cv(self, c)
 
 class pos:
   def __init__(self, *a):
@@ -588,7 +585,7 @@ class Board:
     a = self.nodes.interpret(a, start, end)
     messagebox.showinfo('Result', repr(a))
     messagebox.showinfo('Result', repr(a.R))
-    calc_voltages(a, 12)
+    self.nodes.calc_voltages(a, 12)
 
   def onkey(self, ev):
     print(ev)
