@@ -102,26 +102,26 @@ class Parallel(Primitive):
       e.U = self.U
 
 class Delta(Primitive):
-  def __init__(self, a, b, c, i):
-    self.a = a
-    self.b = b
-    self.c = c
+  def __init__(self, x, y, z, i):
+    self.x = x
+    self.y = y
+    self.z = z
     self.i = i
   def __repr__(self):
     r = '\N{GREEK CAPITAL LETTER DELTA}('
-    r += repr(self.a) + ', '
-    r += repr(self.b) + ', '
-    r += repr(self.c) + ', '
+    r += repr(self.x) + ', '
+    r += repr(self.y) + ', '
+    r += repr(self.z) + ', '
     r += repr(self.i) + ')'
     return r
   @property
   def R(self):
     r = {
-      1: self.a.R*self.b.R,
-      2: self.a.R*self.c.R,
-      3: self.b.R*self.c.R
+      1: self.x.R*self.y.R,
+      2: self.x.R*self.z.R,
+      3: self.y.R*self.z.R
     }[self.i]
-    r /= self.a.R+self.b.R+self.c.R
+    r /= self.x.R+self.y.R+self.z.R
     return r
 
 def interpret(data, start, end):
@@ -130,14 +130,14 @@ def interpret(data, start, end):
   def datasearch(a, b=-1): # search for all resistors connecting a and b
     r = []
     for i in range(len(data)):
-      if data[i][0] == a:
-        if data[i][2] == b or b == -1:
+      if data[i].a == a:
+        if data[i].b == b or b == -1:
           r += [i]
-      elif data[i][2] == a:
-        if data[i][0] == b or b == -1:
+      elif data[i].b == a:
+        if data[i].a == b or b == -1:
           r += [i]
     return r
-  n = lambda i, l: data[i][0]+data[i][2]-l # i. resistor connects l and ... nodes
+  n = lambda i, l: data[i].a+data[i].b-l # i. resistor connects l and ... nodes
   def without(arr):
     r = []
     for e in range(len(data)):
@@ -155,9 +155,12 @@ def interpret(data, start, end):
             if cn == i:
               #print(i,an,bn,cn,data[a],data[b],data[c])
               ndata = without((a,b,c))
-              ndata += [[an, Delta(data[a][1], data[b][1], data[c][1], 1), len(ns)]]
-              ndata += [[cn, Delta(data[a][1], data[b][1], data[c][1], 2), len(ns)]]
-              ndata += [[bn, Delta(data[a][1], data[b][1], data[c][1], 3), len(ns)]]
+              da = Delta(data[a], data[b], data[c], 1)
+              db = Delta(data[a], data[b], data[c], 2)
+              dc = Delta(data[a], data[b], data[c], 3)
+              da.a, db.a, dc.a = an, cn, bn
+              da.b, db.b, dc.b = len(ns), len(ns), len(ns)
+              ndata += [da, db, dc]
               return ndata
     return None
   def processSeries():
@@ -165,17 +168,20 @@ def interpret(data, start, end):
       if i != start and i != end:
         d = datasearch(i)
         if len(d) == 2:
-          a, b = n(d[0], i), n(d[1], i)
           ndata = without(d)
-          ndata += [[a, Series(data[d[0]][1], data[d[1]][1]), b]]
+          nn = Series(data[d[0]], data[d[1]])
+          nn.a, nn.b = n(d[0], i), n(d[1], i)
+          ndata += [nn]
           return ndata
     return None
   def processParallel():
     for e in range(len(data)):
       for f in range(len(data)):
-        if e != f and (data[e][0] == data[f][0] and data[e][2] == data[f][2]) or (data[e][0] == data[f][2] and data[e][2] == data[f][0]):
+        if e != f and (data[e].a == data[f].a and data[e].b == data[f].b) or (data[e].a == data[f].b and data[e].b == data[f].a):
           ndata = without((e,f))
-          ndata += [[data[e][0], Parallel(data[e][1], data[f][1]), data[e][2]]]
+          nn = Parallel(data[e], data[f])
+          nn.a, nn.b = data[e].a, data[e].b
+          ndata += [nn]
           return ndata
     return None
   def processUnnecessary():
@@ -186,7 +192,7 @@ def interpret(data, start, end):
         if len(a) == 1:
           rmvd += a
     for i in range(len(data)):
-      if data[i][0] == data[i][2]:
+      if data[i].a == data[i].b:
         rmvd += [i]
     return without(rmvd) if rmvd else None
   # -----
@@ -208,7 +214,7 @@ def interpret(data, start, end):
       return Primitive(0)
     return Primitive(math.inf)
   if len(data) == 1:
-    return data[0][1]
+    return data[0]
   raise Error()
 
 nodes = []
@@ -532,7 +538,9 @@ class Board:
         b=ttoposb(pos(e))
         a=searchNode(a.x, a.y)
         b=searchNode(b.x, b.y)
-        r += [[a, self.tels[e], b]]
+        self.tels[e].a = a
+        self.tels[e].b = b
+        r += [self.tels[e]]
     return r
   def calc(self):
     b = self.calc_res()
