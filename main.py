@@ -378,11 +378,11 @@ class apin(element):
       del self.parent.oels[e]
   def render(self, x, y, s):
     r = s*0.1
-    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='green',fill='green')
-    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='green',fill='green')
+    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='blue',fill='green')
+    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='blue',fill='green')
     r *= 2
-    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='green',style=ARC)
-    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='green',style=ARC)
+    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='blue',style=ARC)
+    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='blue',style=ARC)
     
 class bpin(element):
   xy = 1
