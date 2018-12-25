@@ -33,6 +33,12 @@ from time import time, sleep
 import copy
 import pickle
 
+units = {'R': '\N{OHM SIGN}', 'U': 'V', 'I': 'A'}
+def getUnit(what):
+  if what in units:
+    return units[what]
+  return ''
+
 class Primitive:
   def __init__(self, R):
     self.R = R
@@ -425,7 +431,7 @@ class resistor(element, Primitive):
     a = None
     while a is None:
       a = resistor.oR
-      a = self.parent.getFloat("Value of R" + str(self.i) + " [\N{OHM SIGN}]")
+      a = self.parent.getFloat("Value of R" + str(self.i) + " [" + getUnit('R') + "]")
     resistor.oR = a
     self.R = a
   @property
@@ -519,10 +525,10 @@ class Board:
         first = True
         for f, g in e.info.items():
           if first:
-            txt += ' ' + f + '=' + str(g) + '\n'
             first = False
           else:
-            txt += (len(repr(e))+1)*' ' + f + '=' + str(g) + '\n'
+            txt += len(repr(e))*' '
+          txt += ' ' + f + '=' + str(g) + ' ' + getUnit(f) + '\n'
         if txt[-1] != '\n':
           txt += '\n'
       p = pos(p)
