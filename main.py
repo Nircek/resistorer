@@ -473,9 +473,8 @@ class Board:
     self.w.pack(expand=True)
     self.w.focus_set()
     self.in_motion = pos(-1,-1)
-    self.click_moved = False
-    self.first_click = None
     self.shift = pos(0, 0)
+    self.newpos = pos(0, 0)
     self.newself = False
     self.x = 0
     self.y = 0
@@ -518,7 +517,7 @@ class Board:
       if p.r != self.in_motion.r:
         e.render(p.x*self.s-self.x, p.y*self.s-self.y, self.s, p.p)
       else:
-        e.render(self.shift.x-self.x, self.shift.y-self.y, self.s, p.p)
+        e.render(self.newpos.x-self.shift.x, self.newpos.y-self.shift.y, self.s, p.p)
         txt=''
         for k, v in e.info.items():
           txt += str(k) + ' -> ' + str(v) + '\n'
@@ -531,21 +530,18 @@ class Board:
       return self.newself
     return self
   def onclick1(self, ev):
-    self.click_moved = False
     self.in_motion = pround(ev.x+self.x, ev.y+self.y, self.s, 2)
-    #print(self.in_motion)
-    self.first_click = pos(ev.x, ev.y)
-    self.first_view = pos(self.x, self.y)
+    self.shift = pos(ev.x+self.x-self.in_motion.x*self.s, ev.y+self.y-self.in_motion.y*self.s)
+    self.newpos = pos(ev.x, ev.y)
   def onrel1(self, ev):
-    if self.click_moved:
-      if self.in_motion.r in self.tels.keys() and pround(ev.x, ev.y, self.s, 2).r != self.in_motion.r:
-        self.tels[pround(ev.x+self.x, ev.y+self.y, self.s, 2).r] = self.tels[self.in_motion.r]
-        self.tels.pop(self.in_motion.r)
+    if self.in_motion.r in self.tels.keys() and pround(ev.x+self.x, ev.y+self.y, self.s, 2).r != self.in_motion.r:
+      print(pround(ev.x+self.x, ev.y+self.y, self.s, 2))
+      self.tels[pround(ev.x+self.x, ev.y+self.y, self.s, 2).r] = self.tels[self.in_motion.r]
+      self.tels.pop(self.in_motion.r)
     self.in_motion = pos(-1, -1)
     self.shift = pos(-1,-1)
   def motion1(self, ev):
-    self.click_moved = True
-    self.shift = pos(ev.x+self.x, ev.y+self.y)
+    self.newpos = pos(ev.x, ev.y)
   def updateNode(self):
     self.nodes.resetNode()
     for e in self.oels:
