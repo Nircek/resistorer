@@ -660,6 +660,23 @@ class Board:
   def newSketch(self):
       self.tels = {}
       self.oels = {}
+  def count(self):
+    global resistor_i
+    resistor_i = 1
+    for e in self.tels.values():
+      if str(e) is 'resistor':
+        e.i = resistor_i
+        resistor_i += 1
+  def zoom(self, x):
+    s = self.s
+    self.s += x
+    self.x += self.x//s
+    self.y += self.y//s
+  def delete(self, x, y):
+    if pround(x, y, self.s, 2).r in self.tels.keys():
+      del self.tels[pround(x, y, self.s, 2).r]
+    if pround(x, y, self.s, 1).q in self.oels.keys():
+      del self.oels[pround(x, y, self.s, 1).q]
   def onkey(self, ev):
     print(ev, ev.state)
     ev.x += self.x
@@ -677,23 +694,13 @@ class Board:
     if ev.keysym == 'backslash':
       code.InteractiveConsole(vars()).interact()
     if ev.keysym == 'apostrophe' or ev.keysym == 'quoteright':
-      global resistor_i
-      resistor_i = 1
-      for e in self.tels.values():
-        if str(e) is 'resistor':
-          e.i = resistor_i
-          resistor_i += 1
+      self.count()
     if (ev.state&1)!=0 and ev.keysym == 'Delete':  # shift + del
       self.newSketch()
-    s = self.s
     if ev.keysym == 'plus':
-      self.s += 1
-      self.x += self.x//s
-      self.y += self.y//s
+      self.zoom(+1)
     if ev.keysym == 'minus':
-      self.s -= 1
-      self.x += self.x//s
-      self.y += self.y//s
+      self.zoom(-1)
     if ev.keysym == 'Left':
       self.x -= 1
     if ev.keysym == 'Right':
@@ -702,15 +709,11 @@ class Board:
       self.y -= 1
     if ev.keysym == 'Down':
       self.y += 1
+    if ev.keysym == 'Delete':
+      self.delete(ev.x, ev.y)
     if pround(ev.x, ev.y, self.s, 2).r in self.tels.keys():
-      if ev.keysym == 'Delete':
-        del self.tels[pround(ev.x, ev.y, self.s, 2).r]
-      else:
         self.tels[pround(ev.x, ev.y, self.s, 2).r].onkey(ev)
     if pround(ev.x, ev.y, self.s, 1).q in self.oels.keys():
-      if ev.keysym == 'Delete':
-        del self.oels[pround(ev.x, ev.y, self.s, 1).q]
-      else:
         self.oels[pround(ev.x, ev.y, self.s, 1).q].onkey(ev)
   def getFloat(self, msg):
     a = simpledialog.askfloat("Input", msg, parent=self.tk, minvalue=0.0)
