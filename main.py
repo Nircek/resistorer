@@ -483,6 +483,9 @@ class Board:
     self.y = 0
     self.nodes = Nodes()
     self.lastfile = None
+    self.queue = []
+  def withClick(self, x):
+    self.queue += [x]
   def configure(self, ev):
     self.SIZE.x = ev.width
     self.SIZE.y = ev.height
@@ -505,7 +508,7 @@ class Board:
     fm.add_command(label='New', command=self.newSketch)
     fm.add_command(label='Open', command=self.open)
     fm.add_command(label='Save', command=self.save)
-    fm.add_command(label='Save as...', command=lambda:self.open(-1))
+    fm.add_command(label='Save as...', command=lambda:self.save(-1))
     fm.add_separator()
     fm.add_command(label='Exit', command=self.tk.quit)
     mb.add_cascade(label='File', menu=fm)
@@ -531,7 +534,6 @@ class Board:
     mb.add_cascade(label='Debug', menu=dm)
     #-----
     self.tk.config(menu=mb)
-
   def load(self, data):
     a, b = self.tk, self.w
     r = pickle.loads(data)
@@ -602,12 +604,14 @@ class Board:
       return self.newself
     return self
   def onclick1(self, ev):
+    if self.queue:
+      self.queue[0]((ev.x, ev.y))
+      self.queue = self.queue[1:]
     self.in_motion = pround(ev.x+self.x, ev.y+self.y, self.s, 2)
     self.shift = pos(ev.x+self.x-self.in_motion.x*self.s, ev.y+self.y-self.in_motion.y*self.s)
     self.newpos = pos(ev.x, ev.y)
   def onrel1(self, ev):
     if self.in_motion.r in self.tels.keys() and pround(ev.x+self.x, ev.y+self.y, self.s, 2).r != self.in_motion.r:
-      print(pround(ev.x+self.x, ev.y+self.y, self.s, 2))
       self.tels[pround(ev.x+self.x, ev.y+self.y, self.s, 2).r] = self.tels[self.in_motion.r]
       self.tels.pop(self.in_motion.r)
     self.in_motion = pos(-1, -1)
@@ -672,6 +676,8 @@ class Board:
     self.s += x
     self.x += self.x//s
     self.y += self.y//s
+  def interactive(self):
+      code.InteractiveConsole(vars()).interact()
   def delete(self, x, y):
     if pround(x, y, self.s, 2).r in self.tels.keys():
       del self.tels[pround(x, y, self.s, 2).r]
@@ -692,7 +698,7 @@ class Board:
     if ev.keysym == 'slash':
       self.calc()
     if ev.keysym == 'backslash':
-      code.InteractiveConsole(vars()).interact()
+      self.interactive()
     if ev.keysym == 'apostrophe' or ev.keysym == 'quoteright':
       self.count()
     if (ev.state&1)!=0 and ev.keysym == 'Delete':  # shift + del
