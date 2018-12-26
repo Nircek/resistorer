@@ -514,23 +514,24 @@ class Board:
     mb.add_cascade(label='File', menu=fm)
     #-----
     em = Menu(mb, tearoff=0)
-    em.add_command(label='Add a wire', command=None)
-    em.add_command(label='Add a resistor', command=None)
-    em.add_command(label='Add a apin', command=None)
-    em.add_command(label='Add a bpin', command=None)
+    ae = lambda t: lambda:self.withClick(lambda p:self.new(t,p[0],p[1])) # add element
+    em.add_command(label='Add a wire', command=ae(wire))
+    em.add_command(label='Add a resistor', command=ae(resistor))
+    em.add_command(label='Add a apin', command=ae(apin))
+    em.add_command(label='Add a bpin', command=ae(bpin))
     em.add_separator()
-    em.add_command(label='Delete element', command=None)
+    em.add_command(label='Delete element', command=lambda:self.withClick(lambda p:self.delete(p[0],p[1])))
     em.add_command(label='Delete all', command=self.newSketch)
     mb.add_cascade(label='Edit', menu=em)
     #-----
     vm = Menu(mb, tearoff=0)
-    vm.add_command(label='Zoom in', command=None)
-    vm.add_command(label='Zoom out', command=None)
-    vm.add_command(label='Count resistors', command=None)
+    vm.add_command(label='Zoom in', command=lambda:self.zoom(+1))
+    vm.add_command(label='Zoom out', command=lambda:self.zoom(-1))
+    vm.add_command(label='Count resistors', command=self.count)
     mb.add_cascade(label='View', menu=vm)
     #-----
     dm = Menu(mb, tearoff=0)
-    dm.add_command(label='Open a console', command=None)
+    dm.add_command(label='Open a console', command=self.interactive)
     mb.add_cascade(label='Debug', menu=dm)
     #-----
     self.tk.config(menu=mb)
