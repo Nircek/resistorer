@@ -26,12 +26,13 @@
 # SOFTWARE.
 
 import code
-from tkinter import simpledialog, messagebox
+from tkinter import simpledialog, messagebox, filedialog
 from tkinter import *
 import math
 from time import time, sleep
 import copy
 import pickle
+from sys import argv
 
 units = {'R': '\N{OHM SIGN}', 'U': 'V', 'I': 'A'}
 def getUnit(what):
@@ -504,6 +505,26 @@ class Board:
     r.w.bind('<B1-Motion>', r.motion1)
     r.w.bind('<KeyPress>', r.onkey)
     self.newself = r
+  def open(self, file=None):
+    if file is None:
+      f = filedialog.askopenfile(mode='rb', filetypes=(('sketch files','*.sk'),('all files','*.*')))
+    else:
+      f = open(file, mode='rb')
+    if f is None:
+      return False
+    self.load(f.read())
+    f.close()
+    return True
+  def save(self, file=None):
+    if file is None:
+      f = filedialog.asksaveasfile(mode='wb', filetypes=(('sketch files','*.sk'),('all files','*.*')))
+    else:
+      f = open(file, mode='wb')
+    if f is None:
+      return False
+    f.write(self.dump())
+    f.close()
+    return True
   def new(self, cl, x, y):
     if cl.xy == 2:
       p = pround(x, y, self.s, 2)
@@ -661,6 +682,8 @@ class Board:
 
 if __name__ == '__main__':
   board = Board()
+  if len(argv) > 1:
+    board.open(argv[1])
   if True:#try:
     while 1:
       t = time()
