@@ -620,9 +620,11 @@ class Board:
     messagebox.showinfo('Result', repr(a))
     messagebox.showinfo('Result', repr(a.R))
     self.nodes.calc_voltages(a, 12)
-
+  def newSketch(self):
+      self.tels = {}
+      self.oels = {}
   def onkey(self, ev):
-    print(ev)
+    print(ev, ev.state)
     ev.x += self.x
     ev.y += self.y
     if len(ev.keysym)>1 and ev.keysym[:1] == 'F':
@@ -645,8 +647,7 @@ class Board:
           e.i = resistor_i
           resistor_i += 1
     if (ev.state&1)!=0 and ev.keysym == 'Delete':  # shift + del
-      self.tels = {}
-      self.oels = {}
+      self.newSketch()
     s = self.s
     if ev.keysym == 'plus':
       self.s += 1
