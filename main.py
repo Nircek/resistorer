@@ -482,6 +482,7 @@ class Board:
     self.x = 0
     self.y = 0
     self.nodes = Nodes()
+    self.lastfile = None
   def configure(self, ev):
     self.SIZE.x = ev.width
     self.SIZE.y = ev.height
@@ -506,22 +507,24 @@ class Board:
     self.newself = r
   def open(self, file=None):
     if file is None:
-      f = filedialog.askopenfile(mode='rb', filetypes=(('sketch files','*.sk'),('all files','*.*')))
-    else:
-      f = open(file, mode='rb')
-    if f is None:
+      file = filedialog.askopenfilename(filetypes=(('sketch files','*.sk'),('all files','*.*')))
+    if file is None:
       return False
+    f = open(file, mode='rb')
     self.load(f.read())
     f.close()
+    self.lastfile = file
     return True
-  def save(self, file=None):
+  def save(self, file=None): # file=-1 for force asking
+    if (file is None) and (not self.lastfile is None):
+      file = self.lastfile
+    elif (file is None) or (file == -1):
+      file = filedialog.asksaveasfilename(filetypes=(('sketch files','*.sk'),('all files','*.*')))
     if file is None:
-      f = filedialog.asksaveasfile(mode='wb', filetypes=(('sketch files','*.sk'),('all files','*.*')))
-    else:
-      f = open(file, mode='wb')
-    if f is None:
       return False
+    f = open(file, mode='wb')
     f.write(self.dump())
+    self.lastfile = file
     f.close()
     return True
   def new(self, cl, x, y):
