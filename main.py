@@ -510,7 +510,7 @@ class Board:
     fm.add_command(label='Save', command=self.save)
     fm.add_command(label='Save as...', command=lambda:self.save(-1))
     fm.add_separator()
-    fm.add_command(label='Exit', command=self.tk.quit)
+    fm.add_command(label='Exit', command=self.tk.destroy)
     mb.add_cascade(label='File', menu=fm)
     #-----
     em = Menu(mb, tearoff=0)
@@ -544,19 +544,19 @@ class Board:
   def open(self, file=None):
     if file is None:
       file = filedialog.askopenfilename(filetypes=(('sketch files','*.sk'),('all files','*.*')))
-    if file is None:
+    if not file:
       return False
     f = open(file, mode='rb')
     self.load(f.read())
     f.close()
-    self.lastfile = file
+    self.newself.lastfile = file
     return True
   def save(self, file=None): # file=-1 for force asking
     if (file is None) and (not self.lastfile is None):
       file = self.lastfile
     elif (file is None) or (file == -1):
       file = filedialog.asksaveasfilename(filetypes=(('sketch files','*.sk'),('all files','*.*')))
-    if file is None:
+    if not file:
       return False
     f = open(file, mode='wb')
     f.write(self.dump())
