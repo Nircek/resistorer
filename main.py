@@ -499,6 +499,39 @@ class Board:
     self.w.bind('<B1-Motion>', self.motion1)
     self.w.bind('<KeyPress>', self.onkey)
     self.tk.bind('<Configure>', self.configure)
+    #-----
+    mb = Menu(self.tk)
+    fm = Menu(mb, tearoff=0)
+    fm.add_command(label='New', command=self.newSketch)
+    fm.add_command(label='Open', command=self.open)
+    fm.add_command(label='Save', command=self.save)
+    fm.add_command(label='Save as...', command=lambda:self.open(-1))
+    fm.add_separator()
+    fm.add_command(label='Exit', command=self.tk.quit)
+    mb.add_cascade(label='File', menu=fm)
+    #-----
+    em = Menu(mb, tearoff=0)
+    em.add_command(label='Add a wire', command=None)
+    em.add_command(label='Add a resistor', command=None)
+    em.add_command(label='Add a apin', command=None)
+    em.add_command(label='Add a bpin', command=None)
+    em.add_separator()
+    em.add_command(label='Delete element', command=None)
+    em.add_command(label='Delete all', command=self.newSketch)
+    mb.add_cascade(label='Edit', menu=em)
+    #-----
+    vm = Menu(mb, tearoff=0)
+    vm.add_command(label='Zoom in', command=None)
+    vm.add_command(label='Zoom out', command=None)
+    vm.add_command(label='Count resistors', command=None)
+    mb.add_cascade(label='View', menu=vm)
+    #-----
+    dm = Menu(mb, tearoff=0)
+    dm.add_command(label='Open a console', command=None)
+    mb.add_cascade(label='Debug', menu=dm)
+    #-----
+    self.tk.config(menu=mb)
+
   def load(self, data):
     a, b = self.tk, self.w
     r = pickle.loads(data)
@@ -563,6 +596,7 @@ class Board:
     for p, e in self.oels.items():
       p = pos(p)
       e.render(p.x*self.s-self.x, p.y*self.s-self.y, self.s)
+    self.tk.update_idletasks()
     self.tk.update()
     if self.newself:
       return self.newself
