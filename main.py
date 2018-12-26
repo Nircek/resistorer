@@ -472,11 +472,7 @@ class Board:
     self.tk = Tk()
     self.w = Canvas(self.tk, width=WIDTH, height=HEIGHT, bd=0, highlightthickness=0)
     self.me = [self]
-    self.w.bind('<Button 1>', self.onclick1)
-    self.w.bind('<ButtonRelease-1>', self.onrel1)
-    self.w.bind('<B1-Motion>', self.motion1)
-    self.w.bind('<KeyPress>', self.onkey)
-    self.tk.bind('<Configure>', self.configure)
+    self.makeTk()
     self.w.pack(expand=True)
     self.w.focus_set()
     self.in_motion = pos(-1,-1)
@@ -496,14 +492,17 @@ class Board:
     r = pickle.dumps(self)
     self.tk, self.w = a, b
     return r
+  def makeTk(self):
+    self.w.bind('<Button 1>', self.onclick1)
+    self.w.bind('<ButtonRelease-1>', self.onrel1)
+    self.w.bind('<B1-Motion>', self.motion1)
+    self.w.bind('<KeyPress>', self.onkey)
+    self.tk.bind('<Configure>', self.configure)
   def load(self, data):
     a, b = self.tk, self.w
     r = pickle.loads(data)
     r.tk, r.w = a, b
-    r.w.bind('<Button 1>', r.onclick1)
-    r.w.bind('<ButtonRelease-1>', r.onrel1)
-    r.w.bind('<B1-Motion>', r.motion1)
-    r.w.bind('<KeyPress>', r.onkey)
+    r.makeTk()
     self.newself = r
   def open(self, file=None):
     if file is None:
