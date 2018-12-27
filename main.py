@@ -618,6 +618,7 @@ class Board:
         e.render(p.x*self.s-self.x, p.y*self.s-self.y, self.s, p.p)
       else:
         e.render(self.newpos.x-self.shift.x, self.newpos.y-self.shift.y, self.s, p.p)
+    txt += 'R\N{LATIN SMALL LETTER Z WITH STROKE}='+('\N{INFINITY}' if self.crc.R == math.inf else str(self.crc.R))
     self.w.create_text(0,self.SIZE.y,font='TkFixedFont',anchor='sw',text=txt)
     for p, e in self.oels.items():
       p = pos(p)
