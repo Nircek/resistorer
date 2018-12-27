@@ -441,9 +441,10 @@ class resistor(element, Primitive):
     self.getR()
   def getR(self):
     a = None
-    while a is None:
-      a = resistor.oR
-      a = self.parent.getFloat("Value of R" + str(self.i) + " [" + getUnit('R') + "]")
+    a = resistor.oR
+    a = self.parent.getFloat("Value of R" + str(self.i) + " [" + getUnit('R') + "]")
+    if a is None:
+      raise Exception('canceled')
     resistor.oR = a
     self.R = a
   @property
