@@ -43,32 +43,38 @@ def getUnit(what):
 class Primitive:
   def __init__(self, R):
     self.R = R
+    self.U = None
   def __repr__(self):
     return '['+str(self.R)+']'
+  def __str__(self):
+    return self.__class__.__name__
   @property
   def cs(self): # components
     return []
   @property
   def I(self):
-    try:
-      return self._I
-    except AttributeError:
-      return None
+    return self._I
   @property
   def U(self):
-    try:
-      return self._U
-    except AttributeError:
-      return None
+    return self._U
   def updateR(self):
     pass
+  def clearIU(self):
+    self._I = None
+    self._U = None
   @I.setter
   def I(self, x):
+    if x is None:
+      self.clearIU()
+      return
     self._I = x
     self._U = self.R * x
     self.updateR()
   @U.setter
   def U(self, x):
+    if x is None:
+      self.clearIU()
+      return
     self._U = x
     self._I = x / self.R
     self.updateR()
@@ -80,7 +86,9 @@ class Series(Primitive):
     r = '+('
     for e in self.data:
       r += repr(e) + ', '
-    r = r[:-2] + ')'
+    if r != '+(':
+      r = r[:-2]
+    r += ')'
     return r
   @property
   def cs(self): # components
@@ -102,7 +110,9 @@ class Parallel(Primitive):
     r = ':('
     for e in self.data:
       r += repr(e) + ', '
-    r = r[:-2] + ')'
+    if r != ':(':
+      r = r[:-2]
+    r += ')'
     return r
   @property
   def cs(self): # components
@@ -249,7 +259,7 @@ class Nodes:
     q = lambda x: x if (not x is None) else data
     while odata != data:
       odata = data[:]
-      print(odata)
+      #print(odata)
       for i in range(len(toProcess)):
         r = toProcess[i]()
         if not r is None:
@@ -265,7 +275,11 @@ class Nodes:
       return data[0]
     raise Error()
   def calc_voltages(self, c, v, x): # calced
+    if str(c) == 'Primitive':
+      return
     def cv(p, d): # calc voltage(parent, data)
+      if str(d) == 'Primitive':
+        return
       r = False
       for e in d.cs:
         r = cv(p,e)
@@ -354,7 +368,7 @@ def pround(x, y, s, xy):
 class element:
   xy = 1
   def __str__(self):
-    return 'element'
+    return self.__class__.__name__
   def __init__(self, parent):
     self.addr = super().__repr__().split('0x')[1][:-1]
     self.parent = parent
@@ -370,8 +384,6 @@ class element:
 
 class apin(element):
   xy = 1
-  def __str__(self):
-    return 'apin'
   def __init__(self, parent):
     self.parent = parent
     d = []
@@ -390,8 +402,6 @@ class apin(element):
     
 class bpin(element):
   xy = 1
-  def __str__(self):
-    return 'bpin'
   def __init__(self, parent):
     self.parent = parent
     d = []
@@ -410,8 +420,6 @@ class bpin(element):
 
 class wire(element):
   xy = 2
-  def __str__(self):
-    return 'wire'
   def render(self, x, y, s, p):
     self.parent.w.create_line(x, y, x if p == 1 else (x + s), y if p == 0 else (y + s))
   @property
@@ -444,8 +452,6 @@ class resistor(element, Primitive):
       return {'R': self.R, 'U': self.U, 'I': self.I}
     else:
       return {'R': self.R}
-  def __str__(self):
-    return 'resistor'
   def __repr__(self):
     return '{'+str(self.i)+'}'
   def render(self, x, y, s, p):
@@ -489,6 +495,7 @@ class Board:
     self.queue = []
     self.powerv = True # power voltage
     self.power = 12
+    self.crc = Primitive(math.inf) # CiRCuit :D easy to remember
   def setPower(self, v, x):
     self.powerv = v
     self.power = x
@@ -545,6 +552,9 @@ class Board:
     #-----
     dm = Menu(mb, tearoff=0)
     dm.add_command(label='Open a console', command=self.interactive)
+    self.auto = BooleanVar()
+    self.auto.set(True)
+    dm.add_checkbutton(label="Auto calculating", onvalue=True, offvalue=False, variable=self.auto)
     mb.add_cascade(label='Debug', menu=dm)
     #-----
     self.tk.config(menu=mb)
@@ -614,6 +624,8 @@ class Board:
       e.render(p.x*self.s-self.x, p.y*self.s-self.y, self.s)
     self.tk.update_idletasks()
     self.tk.update()
+    if self.auto.get():
+      self.calc()
     if self.newself:
       return self.newself
     return self
@@ -662,18 +674,24 @@ class Board:
   def calc(self):
     b = self.calc_res()
     start = end = -1
+    for e in self.tels.values():
+      e.U = None
     for e in self.oels.keys():
       if str(self.oels[e]) == 'apin':
         start = self.nodes.searchNode(e[0],e[1])
       if str(self.oels[e]) == 'bpin':
         end = self.nodes.searchNode(e[0],e[1])
     if start == -1 or end == -1:
-      messagebox.showerror('Error', 'NO PINS SPECIFIED')
+      if not self.auto.get():
+        messagebox.showerror('Error', 'NO PINS SPECIFIED')
+      self.crc = Primitive(math.inf)
       return
     a = self.calc_res()
     a = self.nodes.interpret(a, start, end)
-    messagebox.showinfo('Result', repr(a))
-    messagebox.showinfo('Result', repr(a.R))
+    if not self.auto.get():
+      messagebox.showinfo('Result', repr(a))
+      messagebox.showinfo('Result', repr(a.R))
+    self.crc = a
     self.nodes.calc_voltages(a, self.powerv, self.power)
   def newSketch(self):
       self.tels = {}
@@ -698,7 +716,7 @@ class Board:
     if pround(x, y, self.s, 1).q in self.oels.keys():
       del self.oels[pround(x, y, self.s, 1).q]
   def onkey(self, ev):
-    print(ev, ev.state)
+    #print(ev, ev.state)
     ev.x += self.x
     ev.y += self.y
     if len(ev.keysym)>1 and ev.keysym[:1] == 'F':
