@@ -619,6 +619,9 @@ class Board:
       else:
         e.render(self.newpos.x-self.shift.x, self.newpos.y-self.shift.y, self.s, p.p)
     txt += 'R\N{LATIN SMALL LETTER Z WITH STROKE}='+('\N{INFINITY}' if self.crc.R == math.inf else str(self.crc.R))
+    u = str(self.power if self.powerv else (0 if math.isnan(self.crc.R * self.power) else (self.crc.R * self.power if self.crc.R * self.power != math.inf else '\N{INFINITY}')))
+    i = str(self.power if (not self.powerv) else ('\N{INFINITY}' if (self.crc.R == 0) else (self.power / self.crc.R)))
+    txt += ' U=' + u + ' I=' + i
     self.w.create_text(0,self.SIZE.y,font='TkFixedFont',anchor='sw',text=txt)
     for p, e in self.oels.items():
       p = pos(p)
