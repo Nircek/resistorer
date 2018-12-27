@@ -264,7 +264,7 @@ class Nodes:
     if len(data) == 1:
       return data[0]
     raise Error()
-  def calc_voltages(self, c, u): # calced
+  def calc_voltages(self, c, v, x): # calced
     def cv(p, d): # calc voltage(parent, data)
       r = False
       for e in d.cs:
@@ -284,7 +284,10 @@ class Nodes:
       self.nv += [None]
     self.nv[c.a] = 0
     #nv[c.b] = u
-    c.U = u
+    if v:
+      c.U = x
+    else:
+      c.I = x
     while cv(self, c):
       pass
 
@@ -484,6 +487,11 @@ class Board:
     self.nodes = Nodes()
     self.lastfile = None
     self.queue = []
+    self.powerv = True # power voltage
+    self.power = 12
+  def setPower(self, v, x):
+    self.powerv = v
+    self.power = x
   def withClick(self, x):
     self.queue += [x]
   def configure(self, ev):
@@ -529,6 +537,11 @@ class Board:
     vm.add_command(label='Zoom out', command=lambda:self.zoom(-1))
     vm.add_command(label='Count resistors', command=self.count)
     mb.add_cascade(label='View', menu=vm)
+    #-----
+    pm = Menu(mb, tearoff=0)
+    pm.add_command(label='Voltage', command=lambda:self.setPower(True, self.getFloat('Voltage ['+getUnit('U')+']')))
+    pm.add_command(label='Current', command=lambda:self.setPower(False, self.getFloat('Current ['+getUnit('I')+']')))
+    mb.add_cascade(label='Power supply', menu=pm)
     #-----
     dm = Menu(mb, tearoff=0)
     dm.add_command(label='Open a console', command=self.interactive)
@@ -661,7 +674,7 @@ class Board:
     a = self.nodes.interpret(a, start, end)
     messagebox.showinfo('Result', repr(a))
     messagebox.showinfo('Result', repr(a.R))
-    self.nodes.calc_voltages(a, 12)
+    self.nodes.calc_voltages(a, self.powerv, self.power)
   def newSketch(self):
       self.tels = {}
       self.oels = {}
