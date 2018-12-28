@@ -533,9 +533,9 @@ class Board:
     mb = Menu(self.tk)
     fm = Menu(mb, tearoff=0)
     fm.add_command(label='New', command=self.newSketch, accelerator='Shift+Del')
-    fm.add_command(label='Open', command=self.open, accelerator='')
-    fm.add_command(label='Save', command=self.save, accelerator='')
-    fm.add_command(label='Save as...', command=lambda:self.save(-1), accelerator='')
+    fm.add_command(label='Open', command=self.open, accelerator='Ctrl+O')
+    fm.add_command(label='Save', command=self.save, accelerator='Ctrl+S')
+    fm.add_command(label='Save as...', command=lambda:self.save(-1), accelerator='Ctrl+Shift+S')
     fm.add_separator()
     fm.add_command(label='Exit', command=lambda:self.stop.set(True), accelerator='Alt+F4')
     mb.add_cascade(label='File', menu=fm)
@@ -777,6 +777,12 @@ class Board:
         self.tels[pround(ev.x, ev.y, self.s, 2).r].onkey(ev)
     if pround(ev.x, ev.y, self.s, 1).q in self.oels.keys():
         self.oels[pround(ev.x, ev.y, self.s, 1).q].onkey(ev)
+    if ev.keysym.upper() == 'S' and ev.state == 0b100:  # Ctrl+S
+      self.save()
+    if ev.keysym.upper() == 'S' and ev.state == 0b101:  # Ctrl+Shift+S
+      self.save(-1)
+    if ev.keysym.upper() == 'O' and ev.state == 0b100:  # Ctrl+O
+      self.open()
   def getFloat(self, msg):
     a = simpledialog.askfloat("Input", msg, parent=self.tk, minvalue=0.0)
     self.w.focus_set()
