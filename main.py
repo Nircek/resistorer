@@ -523,6 +523,7 @@ class Board:
     self.tk, self.w = a, b
     return r
   def makeTk(self):
+    self.tk.title('Resistorer')
     self.w.bind('<Button 1>', self.onclick1)
     self.w.bind('<ButtonRelease-1>', self.onrel1)
     self.w.bind('<B1-Motion>', self.motion1)
