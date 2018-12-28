@@ -32,7 +32,7 @@ import math
 from time import time, sleep
 import copy
 import pickle
-from sys import argv
+from sys import argv, exit
 
 units = {'R': '\N{OHM SIGN}', 'U': 'V', 'I': 'A'}
 def getUnit(what):
