@@ -82,6 +82,7 @@ class Primitive:
 class Series(Primitive):
   def __init__(self, *args):
     self.data = args
+    self.U = None
   def __repr__(self):
     r = '+('
     for e in self.data:
@@ -106,6 +107,7 @@ class Series(Primitive):
 class Parallel(Primitive):
   def __init__(self, *args):
     self.data = args
+    self.U = None
   def __repr__(self):
     r = ':('
     for e in self.data:
@@ -133,6 +135,7 @@ class Delta(Primitive):
     self.y = y
     self.z = z
     self.i = i
+    self.U = None
   def __repr__(self):
     r = '\N{GREEK CAPITAL LETTER DELTA}('
     r += repr(self.x) + ', '
@@ -439,6 +442,7 @@ class resistor(element, Primitive):
       resistor_i += 1
     self.i = i
     self.getR()
+    self.U = None
   def getR(self):
     a = None
     a = resistor.oR
@@ -474,6 +478,12 @@ class resistor(element, Primitive):
       self.parent.w.create_text(x,y+0.5*s,text=str(self.i), angle=270)
 
 class Board:
+  class stop:
+    stop = False
+    def get():
+      return Board.stop.stop
+    def set(x):
+      Board.stop.stop = x
   def __init__(self, WIDTH=1280, HEIGHT=720, s=40):
     self.SIZE = pos(WIDTH, HEIGHT)
     self.s = s  # size of one element
@@ -518,6 +528,7 @@ class Board:
     self.w.bind('<B1-Motion>', self.motion1)
     self.w.bind('<KeyPress>', self.onkey)
     self.tk.bind('<Configure>', self.configure)
+    self.tk.protocol("WM_DELETE_WINDOW", lambda:self.stop.set(True))
     #-----
     mb = Menu(self.tk)
     fm = Menu(mb, tearoff=0)
@@ -526,7 +537,7 @@ class Board:
     fm.add_command(label='Save', command=self.save)
     fm.add_command(label='Save as...', command=lambda:self.save(-1))
     fm.add_separator()
-    fm.add_command(label='Exit', command=self.tk.destroy)
+    fm.add_command(label='Exit', command=lambda:self.stop.set(True))
     mb.add_cascade(label='File', menu=fm)
     #-----
     em = Menu(mb, tearoff=0)
@@ -588,15 +599,23 @@ class Board:
     f.close()
     return True
   def new(self, cl, x, y):
-    if cl.xy == 2:
-      p = pround(x, y, self.s, 2)
-      self.tels[p.r] = cl(self)
-    if cl.xy == 1:
-      p = pround(x, y, self.s, 1)
-      self.oels[p.q] = cl(self)
+    try:
+      if cl.xy == 2:
+        p = pround(x, y, self.s, 2)
+        self.tels[p.r] = cl(self)
+      if cl.xy == 1:
+        p = pround(x, y, self.s, 1)
+        self.oels[p.q] = cl(self)
+    except Exception as a:
+      if a.args[0] == 'canceled':
+        pass
+      else:
+        raise
   def point(self, p):
     self.w.create_oval(p.x, p.y, p.x, p.y, width = 1, fill = 'black')
   def render(self):
+    if self.stop.get():
+      exit()
     self.w.delete('all')
     for x in range(self.x//self.s, (self.SIZE.x+self.x)//self.s+1):
       for y in range(self.y//self.s, (self.SIZE.y+self.y)//self.s+1):
@@ -767,12 +786,6 @@ if __name__ == '__main__':
   board = Board()
   if len(argv) > 1:
     board.open(argv[1])
-  if True:#try:
+  if True:
     while 1:
-      t = time()
-      while t+0.2 > time():
-        board = board.render()
-  #except TclError:
-    # window exit
-    pass
-  # code.InteractiveConsole(vars()).interact()
+      board = board.render()
