@@ -446,7 +446,7 @@ class resistor(element, Primitive):
   def getR(self):
     a = None
     a = resistor.oR
-    a = self.parent.getFloat("Value of R" + str(self.i) + " [" + getUnit('R') + "]")
+    a = self.parent.getFloat('Value of R' + str(self.i) + ' [' + getUnit('R') + ']')
     if a is None:
       raise Exception('canceled')
     resistor.oR = a
@@ -508,6 +508,8 @@ class Board:
     self.power = 12
     self.crc = Primitive(math.inf) # CiRCuit :D easy to remember
   def setPower(self, v, x):
+    if x is None:
+      return
     self.powerv = v
     self.power = x
   def withClick(self, x):
@@ -529,7 +531,7 @@ class Board:
     self.w.bind('<B1-Motion>', self.motion1)
     self.w.bind('<KeyPress>', self.onkey)
     self.tk.bind('<Configure>', self.configure)
-    self.tk.protocol("WM_DELETE_WINDOW", lambda:self.stop.set(True))
+    self.tk.protocol('WM_DELETE_WINDOW', lambda:self.stop.set(True))
     #-----
     mb = Menu(self.tk)
     fm = Menu(mb, tearoff=0)
@@ -545,8 +547,8 @@ class Board:
     ae = lambda t: lambda:self.withClick(lambda p:self.new(t,p[0],p[1])) # add element
     em.add_command(label='Add a wire', command=ae(wire), accelerator='F2')
     em.add_command(label='Add a resistor', command=ae(resistor), accelerator='F3')
-    em.add_command(label='Add a apin', command=ae(apin), accelerator='F4')
-    em.add_command(label='Add a bpin', command=ae(bpin), accelerator='F5')
+    em.add_command(label='Add a + power supply', command=ae(apin), accelerator='F4')
+    em.add_command(label='Add a - power supply', command=ae(bpin), accelerator='F5')
     em.add_separator()
     em.add_command(label='Delete element', command=lambda:self.withClick(lambda p:self.delete(p[0],p[1])), accelerator='Del')
     em.add_command(label='Delete all', command=self.newSketch, accelerator='Shift+Del')
@@ -567,7 +569,8 @@ class Board:
     dm.add_command(label='Open a console', command=self.interactive, accelerator='\\')
     self.auto = BooleanVar()
     self.auto.set(True)
-    dm.add_checkbutton(label="Auto calculating", onvalue=True, offvalue=False, variable=self.auto)
+    dm.add_checkbutton(label='Auto calculating', onvalue=True, offvalue=False, variable=self.auto)
+    dm.add_command(label='Calculate', command=self.calc, accelerator='Enter')
     mb.add_cascade(label='Debug', menu=dm)
     #-----
     self.tk.config(menu=mb)
@@ -752,7 +755,7 @@ class Board:
       else:
         b = gates[nr]
         self.new(b, ev.x, ev.y)
-    if ev.keysym == 'slash':
+    if ev.keysym == 'Enter' or ev.keysym == 'Return':
       self.calc()
     if ev.keysym == 'backslash':
       self.interactive()
@@ -785,7 +788,7 @@ class Board:
     if ev.keysym.upper() == 'O' and ev.state == 0b100:  # Ctrl+O
       self.open()
   def getFloat(self, msg):
-    a = simpledialog.askfloat("Input", msg, parent=self.tk, minvalue=0.0)
+    a = simpledialog.askfloat('Input', msg, parent=self.tk, minvalue=0.0)
     self.w.focus_set()
     return a
 
