@@ -5,7 +5,7 @@
 
 # MIT License
 
-# Copyright (c) 2018 Nircek
+# Copyright (c) 2018-2019 Nircek
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@ import math
 from time import time, sleep
 import copy
 import pickle
-from sys import argv, exit
+import sys
 
 units = {'R': '\N{OHM SIGN}', 'U': 'V', 'I': 'A'}
 def getUnit(what):
@@ -190,20 +190,20 @@ class Nodes:
     # -----
     def datasearch(a, b=-1): # search for all resistors connecting a and b
       r = []
-      for i in range(len(data)):
-        if data[i].a == a:
-          if data[i].b == b or b == -1:
+      for i, e in enumerate(data):
+        if e.a == a:
+          if e.b == b or b == -1:
             r += [i]
-        elif data[i].b == a:
-          if data[i].a == b or b == -1:
+        elif e.b == a:
+          if e.a == b or b == -1:
             r += [i]
       return r
     n = lambda i, l: data[i].a+data[i].b-l # i. resistor connects l and ... nodes
     def without(arr):
       r = []
-      for e in range(len(data)):
-        if not e in arr:
-          r += [data[e]]
+      for i, e in enumerate(data):
+        if not i in arr:
+          r += [e]
       return r
     def processDelta():
       for i in range(len(self.nodes)):
@@ -236,12 +236,12 @@ class Nodes:
             return ndata
       return None
     def processParallel():
-      for e in range(len(data)):
-        for f in range(len(data)):
-          if e != f and (data[e].a == data[f].a and data[e].b == data[f].b) or (data[e].a == data[f].b and data[e].b == data[f].a):
-            ndata = without((e,f))
-            nn = Parallel(data[e], data[f])
-            nn.a, nn.b = data[e].a, data[e].b
+      for i, e in enumerate(data):
+        for j, f in enumerate(data):
+          if i != j and (e.a == f.a and e.b == f.b) or (e.a == f.b and e.b == f.a):
+            ndata = without((i,j))
+            nn = Parallel(e, f)
+            nn.a, nn.b = e.a, e.b
             ndata += [nn]
             return ndata
       return None
@@ -252,8 +252,8 @@ class Nodes:
           a = datasearch(i)
           if len(a) == 1:
             rmvd += a
-      for i in range(len(data)):
-        if data[i].a == data[i].b:
+      for i, e in enumerate(data):
+        if e.a == e.b:
           rmvd += [i]
       return without(rmvd) if rmvd else None
     # -----
@@ -263,11 +263,11 @@ class Nodes:
     while odata != data:
       odata = data[:]
       #print(odata)
-      for i in range(len(toProcess)):
-        r = toProcess[i]()
+      for e in toProcess:
+        r = e()
         if not r is None:
           data = r
-          if toProcess[i] == processDelta:
+          if e == processDelta:
             self.nodes += [[]]
           break
     if not data:
@@ -429,17 +429,15 @@ class wire(element):
   def R(self):
     return 0
 
-resistor_i = 1
-
 class resistor(element, Primitive):
+  resistor_i = 1
   xy = 2
   oR = None
   def __init__(self, parent, i=None):
     self.parent = parent
     if i is None:
-      global resistor_i
-      i = resistor_i
-      resistor_i += 1
+      i = resistor.resistor_i
+      resistor.resistor_i += 1
     self.i = i
     self.getR()
     self.U = None
@@ -619,7 +617,7 @@ class Board:
     self.w.create_oval(p.x, p.y, p.x, p.y, width = 1, fill = 'black')
   def render(self):
     if self.stop.get():
-      exit()
+      sys.exit()
     self.w.delete('all')
     for x in range(self.x//self.s, (self.SIZE.x+self.x)//self.s+1):
       for y in range(self.y//self.s, (self.SIZE.y+self.y)//self.s+1):
@@ -725,12 +723,11 @@ class Board:
       self.tels = {}
       self.oels = {}
   def count(self):
-    global resistor_i
-    resistor_i = 1
+    resistor.resistor_i = 1
     for e in self.tels.values():
       if str(e) is 'resistor':
-        e.i = resistor_i
-        resistor_i += 1
+        e.i = resistor.resistor_i
+        resistor.resistor_i += 1
   def zoom(self, x):
     s = self.s
     self.s += x
@@ -794,8 +791,8 @@ class Board:
 
 if __name__ == '__main__':
   board = Board()
-  if len(argv) > 1:
-    board.open(argv[1])
+  if len(sys.argv) > 1:
+    board.open(sys.argv[1])
   if True:
     while 1:
       board = board.render()
