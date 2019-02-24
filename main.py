@@ -27,7 +27,7 @@
 
 import code
 from tkinter import simpledialog, messagebox, filedialog
-from tkinter import *
+import tkinter as tk
 import math
 from time import time, sleep
 import copy
@@ -331,19 +331,13 @@ class pos:
   def q(self, q):
     self.x, self.y = q
   def __repr__(self):
-    if self.p == -1:
-      return 'pos'+repr(self.q)
-    else:
-      return 'pos'+repr(self.r)
+    return 'pos'+repr(self.q if self.p == -1 else self.r)
 
 def ttoposa(t):  # tel (two element) to pos A
   return pos(t.x, t.y)
 
 def ttoposb(t):
-  if t.p == 0:
-    return pos(t.x+1, t.y)
-  else:
-    return pos(t.x, t.y+1)
+  return pos(t.x+1, t.y) if t.p == 0 else pos(t.x, t.y+1)
 
 def pround(x, y, s, xy):
   if xy == 2:
@@ -354,15 +348,8 @@ def pround(x, y, s, xy):
     x //= 1
     y //= 1
     if abs(sx) > abs(sy):
-      if sx < 0:
-        return pos(x, y, 1)
-      else:
-        return pos(x+1, y, 1)
-    else:
-      if sy < 0:
-        return pos(x, y, 0)
-      else:
-        return pos(x, y+1, 0)
+      return pos(x, y, 1) if sx < 0 else pos(x+1, y, 1)
+    return pos(x, y, 0) if sy < 0 else pos(x, y+1, 0)
   else:
     x = ((x+0.5*s)//s)
     y = ((y+0.5*s)//s)
@@ -400,8 +387,8 @@ class apin(element):
     self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='blue',fill='blue')
     self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='blue',fill='blue')
     r *= 2
-    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='blue',style=ARC)
-    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='blue',style=ARC)
+    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='blue',style='arc')
+    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='blue',style='arc')
     
 class bpin(element):
   xy = 1
@@ -418,8 +405,8 @@ class bpin(element):
     self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='red',fill='red')
     self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='red',fill='red')
     r *= 2
-    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='red',style=ARC)
-    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='red',style=ARC)
+    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='red',style='arc')
+    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='red',style='arc')
 
 class wire(element):
   xy = 2
@@ -487,8 +474,8 @@ class Board:
     self.s = s  # size of one element
     self.tels = {}  # elements with (x, y, p)
     self.oels = {}  # elements with (x, y)
-    self.tk = Tk()
-    self.w = Canvas(self.tk, width=WIDTH, height=HEIGHT, bd=0, highlightthickness=0)
+    self.tk = tk.Tk()
+    self.w = tk.Canvas(self.tk, width=WIDTH, height=HEIGHT, bd=0, highlightthickness=0)
     self.me = [self]
     self.makeTk()
     self.w.pack(expand=True)
@@ -531,8 +518,8 @@ class Board:
     self.tk.bind('<Configure>', self.configure)
     self.tk.protocol('WM_DELETE_WINDOW', lambda:self.stop.set(True))
     #-----
-    mb = Menu(self.tk)
-    fm = Menu(mb, tearoff=0)
+    mb = tk.Menu(self.tk)
+    fm = tk.Menu(mb, tearoff=0)
     fm.add_command(label='New', command=self.newSketch, accelerator='Shift+Del')
     fm.add_command(label='Open', command=self.open, accelerator='Ctrl+O')
     fm.add_command(label='Save', command=self.save, accelerator='Ctrl+S')
@@ -541,7 +528,7 @@ class Board:
     fm.add_command(label='Exit', command=lambda:self.stop.set(True), accelerator='Alt+F4')
     mb.add_cascade(label='File', menu=fm)
     #-----
-    em = Menu(mb, tearoff=0)
+    em = tk.Menu(mb, tearoff=0)
     ae = lambda t: lambda:self.withClick(lambda p:self.new(t,p[0],p[1])) # add element
     em.add_command(label='Add a wire', command=ae(wire), accelerator='F2')
     em.add_command(label='Add a resistor', command=ae(resistor), accelerator='F3')
@@ -552,20 +539,20 @@ class Board:
     em.add_command(label='Delete all', command=self.newSketch, accelerator='Shift+Del')
     mb.add_cascade(label='Edit', menu=em)
     #-----
-    vm = Menu(mb, tearoff=0)
+    vm = tk.Menu(mb, tearoff=0)
     vm.add_command(label='Zoom in', command=lambda:self.zoom(+1), accelerator='+')
     vm.add_command(label='Zoom out', command=lambda:self.zoom(-1), accelerator='-')
     vm.add_command(label='Count resistors', command=self.count, accelerator='\'')
     mb.add_cascade(label='View', menu=vm)
     #-----
-    pm = Menu(mb, tearoff=0)
+    pm = tk.Menu(mb, tearoff=0)
     pm.add_command(label='Voltage', command=lambda:self.setPower(True, self.getFloat('Voltage ['+getUnit('U')+']')))
     pm.add_command(label='Current', command=lambda:self.setPower(False, self.getFloat('Current ['+getUnit('I')+']')))
     mb.add_cascade(label='Power supply', menu=pm)
     #-----
-    dm = Menu(mb, tearoff=0)
+    dm = tk.Menu(mb, tearoff=0)
     dm.add_command(label='Open a console', command=self.interactive, accelerator='\\')
-    self.auto = BooleanVar()
+    self.auto = tk.BooleanVar()
     self.auto.set(True)
     dm.add_checkbutton(label='Auto calculating', onvalue=True, offvalue=False, variable=self.auto)
     dm.add_command(label='Calculate', command=self.calc, accelerator='Enter')
@@ -725,7 +712,7 @@ class Board:
   def count(self):
     resistor.resistor_i = 1
     for e in self.tels.values():
-      if str(e) is 'resistor':
+      if str(e) == 'resistor':
         e.i = resistor.resistor_i
         resistor.resistor_i += 1
   def zoom(self, x):
@@ -793,6 +780,5 @@ if __name__ == '__main__':
   board = Board()
   if len(sys.argv) > 1:
     board.open(sys.argv[1])
-  if True:
-    while 1:
-      board = board.render()
+  while 1:
+    board = board.render()
