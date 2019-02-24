@@ -1,4 +1,4 @@
-# Resistorer
+# Resistorer [![CodeFactor](https://www.codefactor.io/repository/github/nircek/resistorer/badge)](https://www.codefactor.io/repository/github/nircek/resistorer)
 
 Program do liczenia rezystancji zastępczej, prądów oraz spadków napięć.
 
