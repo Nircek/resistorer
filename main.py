@@ -89,17 +89,16 @@ class Series(Primitive):
       r += repr(e) + ', '
     if r != '+(':
       r = r[:-2]
-    r += ')'
-    return r
+    return r + ')'
   @property
   def cs(self): # components
     return self.data
   @property
   def R(self):
-    r = 0
+    rr = 0
     for e in self.data:
-      r += e.R
-    return r
+      rr += e.R
+    return rr
   def updateR(self):
     for e in self.data:
       e.I = self.I
@@ -117,7 +116,7 @@ class Parallel(Primitive):
     r += ')'
     return r
   @property
-  def cs(self): # components
+  def cs(self):
     return self.data
   @property
   def R(self):
@@ -350,10 +349,9 @@ def pround(x, y, s, xy):
     if abs(sx) > abs(sy):
       return pos(x, y, 1) if sx < 0 else pos(x+1, y, 1)
     return pos(x, y, 0) if sy < 0 else pos(x, y+1, 0)
-  else:
-    x = ((x+0.5*s)//s)
-    y = ((y+0.5*s)//s)
-    return pos(x, y)
+  x = ((x+0.5*s)//s)
+  y = ((y+0.5*s)//s)
+  return pos(x, y)
 
 class element:
   xy = 1
@@ -438,10 +436,9 @@ class resistor(element, Primitive):
     self.R = a
   @property
   def info(self):
-    if (not self.I is None) and (not self.U is None):
-      return {'R': self.R, 'U': self.U, 'I': self.I}
-    else:
-      return {'R': self.R}
+    return {'R': self.R, 'U': self.U, 'I': self.I} \
+        if (not self.I is None) and (not self.U is None) \
+        else {'R': self.R}
   def __repr__(self):
     return '{'+str(self.i)+'}'
   def render(self, x, y, s, p):
