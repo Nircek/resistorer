@@ -45,15 +45,13 @@ def get_unit(what):
 
 
 class Primitive:
-    '''TODO'''
-
     def __init__(self, r=1):
-        self.r = r
-        self._i, self._u = None, None
-        self.a, self.b = None, None
+        self.ph_r = r
+        self._ph_i, self._ph_u = None, None
+        self.node_a, self.node_b = None, None
 
     def __repr__(self):
-        return '[' + str(self.r) + ']'
+        return '[' + str(self.ph_r) + ']'
 
     def __str__(self):
         return self.__class__.__name__
@@ -63,36 +61,36 @@ class Primitive:
         return []
 
     @property
-    def i(self):
-        return self._i
+    def ph_i(self):
+        return self._ph_i
 
     @property
-    def u(self):
-        return self._u
+    def ph_u(self):
+        return self._ph_u
 
     def update_r(self):
         pass
 
     def clear_iu(self):
-        self._i = None
-        self._u = None
+        self._ph_i = None
+        self._ph_u = None
 
-    @i.setter
-    def i(self, x):
+    @ph_i.setter
+    def ph_i(self, x):
         if x is None:
             self.clear_iu()
             return
-        self._i = x
-        self._u = self.r * x
+        self._ph_i = x
+        self._ph_u = self.ph_r * x
         self.update_r()
 
-    @u.setter
-    def u(self, x):
+    @ph_u.setter
+    def ph_u(self, x):
         if x is None:
             self.clear_iu()
             return
-        self._u = x
-        self._i = x / self.r
+        self._ph_u = x
+        self._ph_i = x / self.ph_r
         self.update_r()
 
 
@@ -100,7 +98,7 @@ class Series(Primitive):
     def __init__(self, *args):
         super().__init__()
         self.data = args
-        self.u = None
+        self.ph_u = None
 
     def __repr__(self):
         r = '+('
@@ -115,22 +113,22 @@ class Series(Primitive):
         return self.data
 
     @property
-    def r(self):
+    def ph_r(self):
         rr = 0
         for e in self.data:
-            rr += e.r
+            rr += e.ph_r
         return rr
 
     def update_r(self):
         for e in self.data:
-            e.i = self.i
+            e.ph_i = self.ph_i
 
 
 class Parallel(Primitive):
     def __init__(self, *args):
         super().__init__()
         self.data = args
-        self.u = None
+        self.ph_u = None
 
     def __repr__(self):
         r = ':('
@@ -146,15 +144,15 @@ class Parallel(Primitive):
         return self.data
 
     @property
-    def r(self):
+    def ph_r(self):
         r = 0
         for e in self.data:
-            r += 1 / e.r
+            r += 1 / e.ph_r
         return 1 / r
 
     def update_r(self):
         for e in self.data:
-            e.u = self.u
+            e.ph_u = self.ph_u
 
 
 class Delta(Primitive):
@@ -164,7 +162,7 @@ class Delta(Primitive):
         self.y = y
         self.z = z
         self.j = i
-        self.u = None
+        self.ph_u = None
 
     def __repr__(self):
         r = '\N{GREEK CAPITAL LETTER DELTA}('
@@ -179,13 +177,13 @@ class Delta(Primitive):
         return [self.x, self.y, self.z]
 
     @property
-    def r(self):
+    def ph_r(self):
         r = {
-            1: self.x.r * self.y.r,
-            2: self.x.r * self.z.r,
-            3: self.y.r * self.z.r
+            1: self.x.ph_r * self.y.ph_r,
+            2: self.x.ph_r * self.z.ph_r,
+            3: self.y.ph_r * self.z.ph_r
         }[self.j]
-        r /= self.x.r + self.y.r + self.z.r
+        r /= self.x.ph_r + self.y.ph_r + self.z.ph_r
         return r
 
 
@@ -229,17 +227,17 @@ class Nodes:
         def datasearch(a, b=-1):  # search for all resistors connecting a and b
             r = []
             for i, e in enumerate(data):
-                if e.a == a:
-                    if b in (e.b, -1):
+                if e.node_a == a:
+                    if b in (e.node_b, -1):
                         r += [i]
-                elif e.b == a:
-                    if b in (e.a, -1):
+                elif e.node_b == a:
+                    if b in (e.node_a, -1):
                         r += [i]
             return r
 
         def n(i, l):
             '''i. resistor connects l and ... nodes'''
-            return data[i].a + data[i].b - l
+            return data[i].node_a + data[i].node_b - l
 
         def without(arr):
             r = []
@@ -262,8 +260,8 @@ class Nodes:
                                 da = Delta(data[a], data[b], data[c], 1)
                                 db = Delta(data[a], data[b], data[c], 2)
                                 dc = Delta(data[a], data[b], data[c], 3)
-                                da.a, db.a, dc.a = an, cn, bn
-                                da.b, db.b, dc.b = [len(self.nodes)] * 3
+                                da.node_a, db.node_a, dc.node_a = an, cn, bn
+                                da.node_b, db.node_b, dc.node_b = [len(self.nodes)] * 3
                                 ndata += [da, db, dc]
                                 return ndata
             return None
@@ -275,7 +273,7 @@ class Nodes:
                     if len(d) == 2:
                         ndata = without(d)
                         nn = Series(data[d[0]], data[d[1]])
-                        nn.a, nn.b = n(d[0], i), n(d[1], i)
+                        nn.node_a, nn.node_b = n(d[0], i), n(d[1], i)
                         ndata += [nn]
                         return ndata
             return None
@@ -283,11 +281,11 @@ class Nodes:
         def process_parallel():
             for i, e in enumerate(data):
                 for j, f in enumerate(data):
-                    if i != j and (e.a == f.a and e.b == f.b) \
-                            or (e.a == f.b and e.b == f.a):
+                    if i != j and (e.node_a == f.node_a and e.node_b == f.node_b) \
+                            or (e.node_a == f.node_b and e.node_b == f.node_a):
                         ndata = without((i, j))
                         nn = Parallel(e, f)
-                        nn.a, nn.b = e.a, e.b
+                        nn.node_a, nn.node_b = e.node_a, e.node_b
                         ndata += [nn]
                         return ndata
             return None
@@ -300,7 +298,7 @@ class Nodes:
                     if len(a) == 1:
                         rmvd += a
             for i, e in enumerate(data):
-                if e.a == e.b:
+                if e.node_a == e.node_b:
                     rmvd += [i]
             return without(rmvd) if rmvd else None
         # -----
@@ -336,26 +334,26 @@ class Nodes:
             r = False
             for e in d.components:
                 r = cv(p, e)
-            if (d.u is not None) \
-               and ((p.nv[d.a] is None) != (p.nv[d.b] is None)) \
-               and d.a != c.b and d.b != c.b:  # '!=' = 'xor'
-                if p.nv[d.a] is None:
-                    p.nv[d.a] = p.nv[d.b] + d.u
+            if (d.ph_u is not None) \
+               and ((p.nv[d.node_a] is None) != (p.nv[d.node_b] is None)) \
+               and d.node_a != c.node_b and d.node_b != c.node_b:  # '!=' = 'xor'
+                if p.nv[d.node_a] is None:
+                    p.nv[d.node_a] = p.nv[d.node_b] + d.ph_u
                 else:
-                    p.nv[d.b] = p.nv[d.a] + d.u
+                    p.nv[d.node_b] = p.nv[d.node_a] + d.ph_u
                 return True
-            if d.u is None and (not ((p.nv[d.a] is None)
-                                     or (p.nv[d.b] is None))):
-                d.u = abs(p.nv[d.a] - p.nv[d.b])
+            if d.ph_u is None and (not ((p.nv[d.node_a] is None)
+                                     or (p.nv[d.node_b] is None))):
+                d.ph_u = abs(p.nv[d.node_a] - p.nv[d.node_b])
                 return True
             return r
         self.nv = [None] * len(self.nodes)
-        self.nv[c.a] = 0
-        # nv[c.b] = u
+        self.nv[c.node_a] = 0
+        # nv[c.node_b] = u
         if v:
-            c.u = x
+            c.ph_u = x
         else:
-            c.i = x
+            c.ph_i = x
         while cv(self, c):
             pass
 
@@ -525,7 +523,7 @@ class resistor(telement, Primitive):
             resistor.resistor_i += 1
         self.id = i
         self.getR()
-        self.u = None
+        self.ph_u = None
 
     def getR(self):
         a = None
@@ -535,13 +533,13 @@ class resistor(telement, Primitive):
         if a is None:
             raise CanceledError
         resistor.oR = a
-        self.r = a
+        self.ph_r = a
 
     @property
     def info(self):
-        return {'R': self.r, 'U': self.u, 'I': self.i} \
-            if (self.i is not None) and (self.u is not None) \
-            else {'R': self.r}
+        return {'R': self.ph_r, 'U': self.ph_u, 'I': self.ph_i} \
+            if (self.ph_i is not None) and (self.ph_u is not None) \
+            else {'R': self.ph_r}
 
     def __repr__(self):
         return '{' + str(self.id) + '}'
@@ -766,14 +764,14 @@ class Board:
                 e.render(self.newpos.x - self.shift.x,
                          self.newpos.y - self.shift.y, self.s, p.p)
         txt += 'R\N{LATIN SMALL LETTER Z WITH STROKE}=' + \
-            ('\N{INFINITY}' if self.crc.r == math.inf else str(self.crc.r))
+            ('\N{INFINITY}' if self.crc.ph_r == math.inf else str(self.crc.ph_r))
         u = str(self.power if self.powerv else (
-            0 if math.isnan(self.crc.r * self.power) else (
-                self.crc.r * self.power if self.crc.r * self.power != math.inf
+            0 if math.isnan(self.crc.ph_r * self.power) else (
+                self.crc.ph_r * self.power if self.crc.ph_r * self.power != math.inf
                 else '\N{INFINITY}')))
         i = str(self.power if (not self.powerv) else (
-            '\N{INFINITY}' if (self.crc.r == 0) else (
-                self.power / self.crc.r)))
+            '\N{INFINITY}' if (self.crc.ph_r == 0) else (
+                self.power / self.crc.ph_r)))
         txt += ' U=' + u + ' I=' + i
         self.w.create_text(0, self.SIZE.y, font='TkFixedFont',
                            anchor='sw', text=txt)
@@ -834,8 +832,8 @@ class Board:
                 b = ttoposb(pos(e))
                 a = self.nodes.searchNode(a.x, a.y)
                 b = self.nodes.searchNode(b.x, b.y)
-                self.tels[e].a = a
-                self.tels[e].b = b
+                self.tels[e].node_a = a
+                self.tels[e].node_b = b
                 r += [self.tels[e]]
         return r
 
@@ -843,7 +841,7 @@ class Board:
         self.calc_res()
         start = end = -1
         for e in self.tels.values():
-            e.u = None
+            e.ph_u = None
         for e in self.oels.keys():
             if str(self.oels[e]) == 'apin':
                 start = self.nodes.searchNode(e[0], e[1])
@@ -858,7 +856,7 @@ class Board:
         a = self.nodes.interpret(a, start, end)
         if not self.auto.get():
             messagebox.showinfo('Result', repr(a))
-            messagebox.showinfo('Result', repr(a.r))
+            messagebox.showinfo('Result', repr(a.ph_r))
         self.crc = a
         self.nodes.calc_voltages(a, self.powerv, self.power)
 
