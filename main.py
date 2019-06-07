@@ -315,7 +315,7 @@ class Nodes:
                 r = e()
                 if r is not None:
                     data = r
-                    if e == process_delta:
+                    if e == process_delta:  # pylint: disable=W0143
                         self.nodes += [[]]
                     break
         if not data:
@@ -332,7 +332,7 @@ class Nodes:
 
         def cv(p, d):  # calc voltage(parent, data)
             if str(d) == 'Primitive':
-                return
+                return None
             r = False
             for e in d.components:
                 r = cv(p, e)
@@ -344,14 +344,12 @@ class Nodes:
                 else:
                     p.nv[d.b] = p.nv[d.a] + d.u
                 return True
-            elif d.u is None and (not ((p.nv[d.a] is None)
-                                       or (p.nv[d.b] is None))):
+            if d.u is None and (not ((p.nv[d.a] is None)
+                                     or (p.nv[d.b] is None))):
                 d.u = abs(p.nv[d.a] - p.nv[d.b])
                 return True
             return r
-        self.nv = []
-        for e in range(len(self.nodes)):
-            self.nv += [None]
+        self.nv = [None] * len(self.nodes)
         self.nv[c.a] = 0
         # nv[c.b] = u
         if v:
@@ -418,8 +416,6 @@ def pround(x, y, s, xy):
 
 
 class element:
-    xy = 1
-
     def __str__(self):
         return self.__class__.__name__
 
@@ -434,18 +430,23 @@ class element:
     def __repr__(self):
         return str(vars(self))
 
-    def render(self, x, y, s):
-        self.parent.w.create_rectangle(x, y, x + s, y + s)
-
     def onkey(self, ev):
         pass
 
 
-class apin(element):
-    xy = 1
+class oelement(element):
+    def render(self, x, y, s):
+        pass
 
+
+class telement(element):
+    def render(self, x, y, s, p):
+        pass
+
+
+class apin(oelement):
     def __init__(self, parent):
-        self.parent = parent
+        super().__init__(parent)
         d = []
         for e in self.parent.oels.keys():
             if str(self.parent.oels[e]) == 'apin':
@@ -471,11 +472,9 @@ class apin(element):
                                  outline='blue', style='arc')
 
 
-class bpin(element):
-    xy = 1
-
+class bpin(oelement):
     def __init__(self, parent):
-        self.parent = parent
+        super().__init__(parent)
         d = []
         for e in self.parent.oels.keys():
             if str(self.parent.oels[e]) == 'bpin':
@@ -500,9 +499,7 @@ class bpin(element):
                                  outline='red', style='arc')
 
 
-class wire(element):
-    xy = 2
-
+class wire(telement):
     def render(self, x, y, s, p):
         self.parent.w.create_line(x, y, x if p == 1 else (
             x + s), y if p == 0 else (y + s))
@@ -512,12 +509,16 @@ class wire(element):
         return 0
 
 
-class resistor(element, Primitive):
+class CanceledError(Exception):
+    pass
+
+
+class resistor(telement, Primitive):
     resistor_i = 1
-    xy = 2
     oR = None
 
     def __init__(self, parent, i=None):
+        super().__init__(parent)
         self.parent = parent
         if i is None:
             i = resistor.resistor_i
@@ -532,7 +533,7 @@ class resistor(element, Primitive):
         a = self.parent.getFloat(
             'Value of R' + str(self.id) + ' [' + get_unit('R') + ']')
         if a is None:
-            raise Exception('canceled')
+            raise CanceledError
         resistor.oR = a
         self.r = a
 
@@ -725,17 +726,14 @@ class Board:
 
     def new(self, cl, x, y):
         try:
-            if cl.xy == 2:
+            if issubclass(cl, telement):
                 p = pround(x, y, self.s, 2)
                 self.tels[p.r] = cl(self)
-            if cl.xy == 1:
+            if issubclass(cl, oelement):
                 p = pround(x, y, self.s, 1)
                 self.oels[p.q] = cl(self)
-        except Exception as a:
-            if a.args[0] == 'canceled':
-                pass
-            else:
-                raise
+        except CanceledError:
+            pass
 
     def point(self, p):
         self.w.create_oval(p.x, p.y, p.x, p.y, width=1, fill='black')
@@ -842,7 +840,7 @@ class Board:
         return r
 
     def calc(self):
-        b = self.calc_res()
+        self.calc_res()
         start = end = -1
         for e in self.tels.values():
             e.u = None
@@ -882,7 +880,7 @@ class Board:
         self.y += self.y // s
 
     def interactive(self):
-        code.InteractiveConsole(vars()).interact()
+        code.InteractiveConsole({'self': self}).interact()
 
     def delete(self, x, y):
         if pround(x, y, self.s, 2).r in self.tels.keys():
