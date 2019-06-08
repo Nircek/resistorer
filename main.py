@@ -196,7 +196,8 @@ class Nodes:
     def interpret(self, data, start, end):  # pylint: disable=R0915, R0914
         # TODO: make circuits solver class and enable above
         # -----
-        def datasearch(node_a, node_b=-1):  # search for all resistors connecting node_a and node_b
+        def datasearch(node_a, node_b=-1):
+            '''look for all resistors connecting node_a and node_b'''
             results = []
             for i, connection in enumerate(data):
                 if connection.node_a == node_a:
@@ -207,86 +208,93 @@ class Nodes:
                         results += [i]
             return results
 
-        def n(i, l):
-            '''i. resistor connects l and ... nodes'''
-            return data[i].node_a + data[i].node_b - l
+        def other_side(index, known):
+            '''index of element connects known node and returned node'''
+            return data[index].node_a + data[index].node_b - known
 
         def without(arr):
-            r = []
-            for i, connection in enumerate(data):
-                if i not in arr:
-                    r += [connection]
-            return r
+            return map(lambda x: x[1],
+                       filter(lambda x: x[0] not in arr,
+                              enumerate(arr)))
 
         def process_delta():
-            for i in range(len(self.nodes)):
-                for a in datasearch(i):
-                    an = n(a, i)
-                    for b in datasearch(an):
-                        bn = n(b, an)
-                        for c in datasearch(bn):
-                            cn = n(c, bn)
-                            if cn == i:
-                                # print(i,an,bn,cn,data[a],data[b],data[c])
-                                ndata = without((a, b, c))
-                                da = Delta(data[a], data[b], data[c], 1)
-                                db = Delta(data[a], data[b], data[c], 2)
-                                dc = Delta(data[a], data[b], data[c], 3)
-                                da.node_a, db.node_a, dc.node_a = an, cn, bn
-                                da.node_b, db.node_b, dc.node_b = [
-                                    len(self.nodes)] * 3
-                                ndata += [da, db, dc]
+            for first_node in range(len(self.nodes)):
+                for first in datasearch(first_node):
+                    second_node = other_side(first, first_node)
+                    for second in datasearch(second_node):
+                        third_node = other_side(second, second_node)
+                        for third in datasearch(third_node):
+                            fourth_node = other_side(third, third_node)
+                            if fourth_node == first_node:
+                                ndata = without((first, second, third))
+                                delta_a = Delta(data[first], data[second],
+                                                data[third], 1)
+                                delta_b = Delta(data[first], data[second],
+                                                data[third], 2)
+                                delta_c = Delta(data[first], data[second],
+                                                data[third], 3)
+                                delta_a.node_a, delta_b.node_a, \
+                                    delta_c.node_a = first_node, third_node, \
+                                    second_node
+                                delta_a.node_b, delta_b.node_b, \
+                                    delta_c.node_b = [len(self.nodes)] * 3
+                                ndata += [delta_a, delta_b, delta_c]
                                 return ndata
             return None
 
         def process_series():
-            for i in range(len(self.nodes)):
-                if i not in (start, end):
-                    d = datasearch(i)
-                    if len(d) == 2:
-                        ndata = without(d)
-                        nn = Series(data[d[0]], data[d[1]])
-                        nn.node_a, nn.node_b = n(d[0], i), n(d[1], i)
-                        ndata += [nn]
+            for node in range(len(self.nodes)):
+                if node not in (start, end):
+                    connections = datasearch(node)
+                    if len(connections) == 2:
+                        ndata = without(connections)
+                        series = Series(data[connections[0]],
+                                        data[connections[1]])
+                        series.node_a, series.node_b = \
+                            other_side(connections[0], node), \
+                            other_side(connections[1], node)
+                        ndata += [series]
                         return ndata
             return None
 
         def process_parallel():
-            for i, connection in enumerate(data):
-                for j, connection2 in enumerate(data):
-                    if i != j and (connection.node_a == connection2.node_a and connection.node_b == connection2.node_b) \
-                            or (connection.node_a == connection2.node_b and connection.node_b == connection2.node_a):
-                        ndata = without((i, j))
-                        nn = Parallel(connection, connection2)
-                        nn.node_a, nn.node_b = connection.node_a, connection.node_b
-                        ndata += [nn]
+            for index, connection in enumerate(data):
+                for index2, connection2 in enumerate(data):
+                    nodes_of_conn = connection.node_a, connection.node_b
+                    nodes_of_conn2 = connection2.node_a, connection2.node_b
+                    if index != index2 and nodes_of_conn in \
+                            (nodes_of_conn2, nodes_of_conn2[::-1]):
+                        ndata = without((index, index2))
+                        parallel = Parallel(connection, connection2)
+                        parallel.node_a, parallel.node_b = \
+                            connection.node_a, connection.node_b
+                        ndata += [parallel]
                         return ndata
             return None
 
         def process_unnecessary():
-            rmvd = []
-            for i in range(len(self.nodes)):
-                if i not in (start, end):
-                    a = datasearch(i)
-                    if len(a) == 1:
-                        rmvd += a
-            for i, connection in enumerate(data):
+            removed = []
+            for node in range(len(self.nodes)):
+                if node not in (start, end):
+                    connections = datasearch(node)
+                    if len(connections) == 1:
+                        removed += connections
+            for connection_i, connection in enumerate(data):
                 if connection.node_a == connection.node_b:
-                    rmvd += [i]
-            return without(rmvd) if rmvd else None
+                    removed += [connection_i]
+            return without(removed) if removed else None
         # -----
-        toProcess = [process_unnecessary, process_series,
-                     process_parallel, process_delta]
-        odata = []
-        # q = lambda x: x if (not x is None) else data
-        while odata != data:
-            odata = data[:]
+        processors = [process_unnecessary, process_series,
+                      process_parallel, process_delta]
+        old_data = []
+        while old_data != data:
+            old_data = data[:]
             # print(odata)
-            for e in toProcess:
-                r = e()
-                if r is not None:
-                    data = r
-                    if e == process_delta:  # pylint: disable=W0143
+            for processor in processors:
+                ndata = processor()
+                if ndata is not None:
+                    data = ndata
+                    if processor == process_delta:  # pylint: disable=W0143
                         self.nodes += [[]]
                     break
         if not data:
@@ -295,7 +303,7 @@ class Nodes:
             return Primitive(math.inf)
         if len(data) == 1:
             return data[0]
-        raise RuntimeError()
+        raise RuntimeError('Can\'t find a processor to simplify the circuit')
 
     def calc_voltages(self, c, v, x):  # calced
         if str(c) == 'Primitive':
@@ -329,7 +337,7 @@ class Nodes:
             pass
 
 
-class pos:
+class Pos:
     def __init__(self, *a):
         while len(a) == 1:
             a = a[0]
@@ -361,11 +369,11 @@ class pos:
 
 
 def ttoposa(t):  # tel (two element) to pos A
-    return pos(t.x, t.y)
+    return Pos(t.x, t.y)
 
 
 def ttoposb(t):
-    return pos(t.x + 1, t.y) if t.p == 0 else pos(t.x, t.y + 1)
+    return Pos(t.x + 1, t.y) if t.p == 0 else Pos(t.x, t.y + 1)
 
 
 def pround(x, y, s, xy):
@@ -377,11 +385,11 @@ def pround(x, y, s, xy):
         x //= 1
         y //= 1
         if abs(sx) > abs(sy):
-            return pos(x, y, 1) if sx < 0 else pos(x + 1, y, 1)
-        return pos(x, y, 0) if sy < 0 else pos(x, y + 1, 0)
+            return Pos(x, y, 1) if sx < 0 else Pos(x + 1, y, 1)
+        return Pos(x, y, 0) if sy < 0 else Pos(x, y + 1, 0)
     x = ((x + 0.5 * s) // s)
     y = ((y + 0.5 * s) // s)
-    return pos(x, y)
+    return Pos(x, y)
 
 
 class element:
@@ -545,7 +553,7 @@ class resistor(Primitive, telement):
 
 class Board:
     def __init__(self, WIDTH=1280, HEIGHT=720, s=40):
-        self.SIZE = pos(WIDTH, HEIGHT)
+        self.SIZE = Pos(WIDTH, HEIGHT)
         self.s = s  # size of one element
         self.tels = {}  # elements with (x, y, p)
         self.oels = {}  # elements with (x, y)
@@ -556,9 +564,9 @@ class Board:
         self.makeTk()
         self.w.pack(expand=True)
         self.w.focus_set()
-        self.in_motion = pos(-1, -1)
-        self.shift = pos(0, 0)
-        self.newpos = pos(0, 0)
+        self.in_motion = Pos(-1, -1)
+        self.shift = Pos(0, 0)
+        self.newpos = Pos(0, 0)
         self.newself = False
         self.x = 0
         self.y = 0
@@ -713,7 +721,7 @@ class Board:
         self.w.delete('all')
         for x in range(self.x // self.s, (self.SIZE.x + self.x) // self.s + 1):
             for y in range(self.y // self.s, (self.SIZE.y + self.y) // self.s + 1):
-                self.point(pos(x * self.s - self.x, y * self.s - self.y))
+                self.point(Pos(x * self.s - self.x, y * self.s - self.y))
         txt = ''
         for p, e in self.tels.items():
             if str(e) == 'resistor':
@@ -727,7 +735,7 @@ class Board:
                     txt += ' ' + f + '=' + str(g) + ' ' + get_unit(f) + '\n'
                 if txt[-1] != '\n':
                     txt += '\n'
-            p = pos(p)
+            p = Pos(p)
             if p.r != self.in_motion.r:
                 e.render(p.x * self.s - self.x, p.y *
                          self.s - self.y, self.s, p.p)
@@ -748,7 +756,7 @@ class Board:
         self.w.create_text(0, self.SIZE.y, font='TkFixedFont',
                            anchor='sw', text=txt)
         for p, e in self.oels.items():
-            p = pos(p)
+            p = Pos(p)
             e.render(p.x * self.s - self.x, p.y * self.s - self.y, self.s)
         self.tk.update_idletasks()
         self.tk.update()
@@ -763,9 +771,9 @@ class Board:
             self.queue[0]((ev.x, ev.y))
             self.queue = self.queue[1:]
         self.in_motion = pround(ev.x + self.x, ev.y + self.y, self.s, 2)
-        self.shift = pos(ev.x + self.x - self.in_motion.x *
+        self.shift = Pos(ev.x + self.x - self.in_motion.x *
                          self.s, ev.y + self.y - self.in_motion.y * self.s)
-        self.newpos = pos(ev.x, ev.y)
+        self.newpos = Pos(ev.x, ev.y)
 
     def onrel1(self, ev):
         if self.in_motion.r in self.tels.keys() \
@@ -774,11 +782,11 @@ class Board:
             self.tels[pround(ev.x + self.x, ev.y + self.y,
                              self.s, 2).r] = self.tels[self.in_motion.r]
             self.tels.pop(self.in_motion.r)
-        self.in_motion = pos(-1, -1)
-        self.shift = pos(-1, -1)
+        self.in_motion = Pos(-1, -1)
+        self.shift = Pos(-1, -1)
 
     def motion1(self, ev):
-        self.newpos = pos(ev.x, ev.y)
+        self.newpos = Pos(ev.x, ev.y)
 
     def updateNode(self):
         self.nodes.reset_nodes()
@@ -786,12 +794,12 @@ class Board:
             self.nodes.add_node(e[0], e[1])
         for e in self.tels:
             if str(self.tels[e]) == 'wire':
-                a = ttoposa(pos(e))
-                b = ttoposb(pos(e))
+                a = ttoposa(Pos(e))
+                b = ttoposb(Pos(e))
                 self.nodes.add_node(a.x, a.y, b.x, b.y)
             else:
-                a = ttoposa(pos(e))
-                b = ttoposb(pos(e))
+                a = ttoposa(Pos(e))
+                b = ttoposb(Pos(e))
                 self.nodes.add_node(a.x, a.y)
                 self.nodes.add_node(b.x, b.y)
 
@@ -800,8 +808,8 @@ class Board:
         r = []
         for e in self.tels:
             if str(self.tels[e]) == 'resistor':
-                a = ttoposa(pos(e))
-                b = ttoposb(pos(e))
+                a = ttoposa(Pos(e))
+                b = ttoposb(Pos(e))
                 a = self.nodes.search_node(a.x, a.y)
                 b = self.nodes.search_node(b.x, b.y)
                 self.tels[e].node_a = a
