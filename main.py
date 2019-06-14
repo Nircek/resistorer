@@ -161,36 +161,39 @@ class Delta(Primitive):
 
 class Nodes:
     def __init__(self):
-        self.nodes = []
+        self.nodes = {}
         self.node_voltages = []
 
     def reset_nodes(self):
         self.nodes = []
 
     def search_node(self, x_coord, y_coord):
-        try:
-            return self.nodes.index((x_coord, y_coord))
-        except ValueError:
-            return -1
+        for i, ele in enumerate(self.nodes):
+            if (x_coord, y_coord) in ele:
+                return i
+        return -1
 
     def add_node(self, x_coord, y_coord, x2_coord=-1, y2_coord=-1):
+        print(self.nodes)
         node_index = self.search_node(x_coord, y_coord)
         node2_index = self.search_node(x2_coord, y2_coord)
+        print(node_index, node2_index)
         new_index = -1
         if node_index == -1 and node2_index == -1:
             new_index = len(self.nodes)
             self.nodes += [[]]
-        elif (node_index == -1) + (node2_index == -1) == 1:
+        elif (node_index == -1) != (node2_index == -1):
             new_index = node_index + node2_index + 1  # a or b
         elif node_index != node2_index:
             self.nodes[node_index] += self.nodes[node2_index]
             del self.nodes[node2_index]
             return
-        if (x_coord, y_coord) not in self.nodes[new_index] or \
-                -1 in (x_coord, y_coord):
+        print(new_index)
+        if (x_coord, y_coord) not in self.nodes[new_index] and \
+                -1 not in (x_coord, y_coord):
             self.nodes[new_index] += [(x_coord, y_coord)]
-        if (x2_coord, y2_coord) not in self.nodes[new_index] or \
-                -1 in (x2_coord, y2_coord):
+        if (x2_coord, y2_coord) not in self.nodes[new_index] and \
+                -1 not in (x2_coord, y2_coord):
             self.nodes[new_index] += [(x2_coord, y2_coord)]
 
     def interpret(self, data, start, end):  # pylint: disable=R0915, R0914
@@ -213,9 +216,9 @@ class Nodes:
             return data[index].node_a + data[index].node_b - known
 
         def without(arr):
-            return map(lambda x: x[1],
-                       filter(lambda x: x[0] not in arr,
-                              enumerate(arr)))
+            return list(map(lambda x: x[1],
+                            filter(lambda x: x[0] not in arr,
+                                   enumerate(arr))))
 
         def process_delta():
             for first_node in range(len(self.nodes)):
@@ -468,12 +471,12 @@ class Pin(OElement):
                                  outline=self.color, style='arc')
 
 
-class APin(OElement):
+class APin(Pin):
     def __init__(self, parent):
         super().__init__(parent, 'blue')
 
 
-class BPin(OElement):
+class BPin(Pin):
     def __init__(self, parent):
         super().__init__(parent, 'red')
 
@@ -742,7 +745,7 @@ class Board:
                 self.point(Pos(x * self.s - self.x_coord, y * self.s - self.y_coord))
         txt = ''
         for p, e in self.tels.items():
-            if str(e) == 'resistor':
+            if str(e) == 'Resistor':
                 txt += repr(e)
                 first = True
                 for f, g in e.info.items():
@@ -795,9 +798,9 @@ class Board:
 
     def onrel1(self, ev):
         if self.in_motion.t_tuple in self.tels.keys() \
-            and pround(ev.x + self.x_coord, ev.y + self.y_coord, self.s, True).r \
+            and pround(ev.x + self.x_coord, ev.y + self.y_coord, self.s, True).t_tuple \
                 != self.in_motion.t_tuple:
-            self.tels[pround(ev.x + self.x_coord, ev.y + self.y_coord, self.s, True).r] = \
+            self.tels[pround(ev.x + self.x_coord, ev.y + self.y_coord, self.s, True).t_tuple] = \
                 self.tels[self.in_motion.t_tuple]
             self.tels.pop(self.in_motion.t_tuple)
         self.in_motion = Pos(-1, -1)
@@ -811,7 +814,7 @@ class Board:
         for e in self.oels:
             self.nodes.add_node(e[0], e[1])
         for e in self.tels:
-            if str(self.tels[e]) == 'wire':
+            if str(self.tels[e]) == 'Wire':
                 a = ttoposa(Pos(e))
                 b = ttoposb(Pos(e))
                 self.nodes.add_node(a.x_coord, a.y_coord, b.x_coord, b.y_coord)
@@ -825,7 +828,7 @@ class Board:
         self.updateNode()
         r = []
         for e in self.tels:
-            if str(self.tels[e]) == 'resistor':
+            if str(self.tels[e]) == 'Resistor':
                 a = ttoposa(Pos(e))
                 b = ttoposb(Pos(e))
                 a = self.nodes.search_node(a.x_coord, a.y_coord)
@@ -841,9 +844,9 @@ class Board:
         for e in self.tels.values():
             e.ph_u = None
         for e in self.oels.keys():
-            if str(self.oels[e]) == 'apin':
+            if str(self.oels[e]) == 'APin':
                 start = self.nodes.search_node(e[0], e[1])
-            if str(self.oels[e]) == 'bpin':
+            if str(self.oels[e]) == 'BPin':
                 end = self.nodes.search_node(e[0], e[1])
         if start == -1 or end == -1:
             if not self.auto.get():
@@ -865,7 +868,7 @@ class Board:
     def count(self):
         Resistor.resistor_i = 1
         for e in self.tels.values():
-            if str(e) == 'resistor':
+            if str(e) == 'Resistor':
                 e.i = Resistor.resistor_i
                 Resistor.resistor_i += 1
 
@@ -879,10 +882,10 @@ class Board:
         code.InteractiveConsole({'self': self}).interact()
 
     def delete(self, x, y):
-        if pround(x, y, self.s, True).r in self.tels.keys():
-            del self.tels[pround(x, y, self.s, True).r]
-        if pround(x, y, self.s).q in self.oels.keys():
-            del self.oels[pround(x, y, self.s).q]
+        if pround(x, y, self.s, True).t_tuple in self.tels.keys():
+            del self.tels[pround(x, y, self.s, True).t_tuple]
+        if pround(x, y, self.s).o_tuple in self.oels.keys():
+            del self.oels[pround(x, y, self.s).o_tuple]
 
     def onkey(self, ev):
         # print(ev, ev.state)
@@ -919,10 +922,10 @@ class Board:
             self.y_coord += 1
         if ev.keysym == 'Delete':
             self.delete(ev.x, ev.y)
-        if pround(ev.x, ev.y, self.s, True).r in self.tels.keys():
-            self.tels[pround(ev.x, ev.y, self.s, True).r].onkey(ev)
-        if pround(ev.x, ev.y, self.s).q in self.oels.keys():
-            self.oels[pround(ev.x, ev.y, self.s).q].onkey(ev)
+        if pround(ev.x, ev.y, self.s, True).t_tuple in self.tels.keys():
+            self.tels[pround(ev.x, ev.y, self.s, True).t_tuple].onkey(ev)
+        if pround(ev.x, ev.y, self.s).o_tuple in self.oels.keys():
+            self.oels[pround(ev.x, ev.y, self.s).o_tuple].onkey(ev)
         if ev.keysym.upper() == 'S' and ev.state == 0b100:  # Ctrl+S
             self.save()
         if ev.keysym.upper() == 'S' and ev.state == 0b101:  # Ctrl+Shift+S
