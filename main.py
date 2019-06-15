@@ -3,799 +3,966 @@
 # file from https://github.com/Nircek/resistorer
 # licensed under MIT license
 
-# MIT License
+'''
+MIT License
 
-# Copyright (c) 2018 Nircek
+Copyright (c) 2018-2019 Nircek
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+'''
 
 import code
 from tkinter import simpledialog, messagebox, filedialog
-from tkinter import *
+import tkinter as tk
 import math
-from time import time, sleep
-import copy
 import pickle
-from sys import argv, exit
+import sys
 
-units = {'R': '\N{OHM SIGN}', 'U': 'V', 'I': 'A'}
-def getUnit(what):
-  if what in units:
-    return units[what]
-  return ''
+UNITS = {'R': '\N{OHM SIGN}', 'U': 'V', 'I': 'A'}
+
+
+def get_unit(what):
+    '''get_unit translates the name of variable to corresponding unit of it'''
+    if what in UNITS:
+        return UNITS[what]
+    return ''
+
 
 class Primitive:
-  def __init__(self, R):
-    self.R = R
-    self.U = None
-  def __repr__(self):
-    return '['+str(self.R)+']'
-  def __str__(self):
-    return self.__class__.__name__
-  @property
-  def cs(self): # components
-    return []
-  @property
-  def I(self):
-    return self._I
-  @property
-  def U(self):
-    return self._U
-  def updateR(self):
-    pass
-  def clearIU(self):
-    self._I = None
-    self._U = None
-  @I.setter
-  def I(self, x):
-    if x is None:
-      self.clearIU()
-      return
-    self._I = x
-    self._U = self.R * x
-    self.updateR()
-  @U.setter
-  def U(self, x):
-    if x is None:
-      self.clearIU()
-      return
-    self._U = x
-    self._I = x / self.R
-    self.updateR()
+    def __init__(self, r=None):
+        if r is not None:
+            self.ph_r = r
+        self._ph_i, self._ph_u = None, None
+        self.node_a, self.node_b = None, None
+
+    def __repr__(self):
+        return '[' + str(self.ph_r) + ']'
+
+    def __str__(self):
+        return self.__class__.__name__
+
+    @property
+    def components(self):
+        return []
+
+    @property
+    def ph_i(self):
+        return self._ph_i
+
+    @property
+    def ph_u(self):
+        return self._ph_u
+
+    def update_r(self):
+        pass
+
+    def clear_iu(self):
+        self._ph_i = None
+        self._ph_u = None
+
+    @ph_i.setter
+    def ph_i(self, new):
+        if new is None:
+            self.clear_iu()
+            return
+        self._ph_i = new
+        self._ph_u = self.ph_r * new
+        self.update_r()
+
+    @ph_u.setter
+    def ph_u(self, new):
+        if new is None:
+            self.clear_iu()
+            return
+        self._ph_u = new
+        self._ph_i = new / self.ph_r
+        self.update_r()
+
 
 class Series(Primitive):
-  def __init__(self, *args):
-    self.data = args
-    self.U = None
-  def __repr__(self):
-    r = '+('
-    for e in self.data:
-      r += repr(e) + ', '
-    if r != '+(':
-      r = r[:-2]
-    r += ')'
-    return r
-  @property
-  def cs(self): # components
-    return self.data
-  @property
-  def R(self):
-    r = 0
-    for e in self.data:
-      r += e.R
-    return r
-  def updateR(self):
-    for e in self.data:
-      e.I = self.I
+    def __init__(self, *args):
+        super().__init__()
+        self.data = args
+        self.ph_u = None
+
+    def __repr__(self):
+        return '+(' + ', '.join(map(repr, self.data)) + ')'
+
+    @property
+    def components(self):
+        return self.data
+
+    @property
+    def ph_r(self):
+        return sum(map(lambda x: x.ph_r, self.data))
+
+    def update_r(self):
+        for ele in self.data:
+            ele.ph_i = self.ph_i
+
 
 class Parallel(Primitive):
-  def __init__(self, *args):
-    self.data = args
-    self.U = None
-  def __repr__(self):
-    r = ':('
-    for e in self.data:
-      r += repr(e) + ', '
-    if r != ':(':
-      r = r[:-2]
-    r += ')'
-    return r
-  @property
-  def cs(self): # components
-    return self.data
-  @property
-  def R(self):
-    r = 0
-    for e in self.data:
-      r += 1/e.R
-    return 1/r
-  def updateR(self):
-    for e in self.data:
-      e.U = self.U
+    def __init__(self, *args):
+        super().__init__()
+        self.data = args
+        self.ph_u = None
+
+    def __repr__(self):
+        return ':(' + ', '.join(map(repr, self.data)) + ')'
+
+    @property
+    def components(self):
+        return self.data
+
+    @property
+    def ph_r(self):
+        return 1 / sum(map(lambda x: 1 / x.ph_r, self.data))
+
+    def update_r(self):
+        for ele in self.data:
+            ele.ph_u = self.ph_u
+
 
 class Delta(Primitive):
-  def __init__(self, x, y, z, i):
-    self.x = x
-    self.y = y
-    self.z = z
-    self.i = i
-    self.U = None
-  def __repr__(self):
-    r = '\N{GREEK CAPITAL LETTER DELTA}('
-    r += repr(self.x) + ', '
-    r += repr(self.y) + ', '
-    r += repr(self.z) + ', '
-    r += repr(self.i) + ')'
-    return r
-  @property
-  def cs(self): # components
-    return [self.x,self.y,self.z]
-  @property
-  def R(self):
-    r = {
-      1: self.x.R*self.y.R,
-      2: self.x.R*self.z.R,
-      3: self.y.R*self.z.R
-    }[self.i]
-    r /= self.x.R+self.y.R+self.z.R
-    return r
+    def __init__(self, x, y, z, i):
+        super().__init__()
+        self.components = [x, y, z]
+        self.wiring_type = i
+        self.ph_u = None
+
+    def __repr__(self):
+        return '\N{GREEK CAPITAL LETTER DELTA}(' + \
+               ', '.join(map(repr, self.components + self.wiring_type)) + ')'
+
+    @property
+    def ph_r(self):
+        return {
+            1: self.components[0].ph_r * self.components[1].ph_r,
+            2: self.components[0].ph_r * self.components[2].ph_r,
+            3: self.components[1].ph_r * self.components[2].ph_r
+        }[self.wiring_type] / sum(map(lambda x: x.ph_r, self.components))
+
 
 class Nodes:
-  def __init__(self):
-    self.nodes = []
-    self.nv = []
-  def resetNode(self):
-    self.nodes = []
-  def searchNode(self,x,y):
-    for i in range(len(self.nodes)):
-      if (x,y) in self.nodes[i]:
-        return i
-    return -1
-  def addNode(self,x,y,x2=-1,y2=-1):
-    a = self.searchNode(x,y)
-    b = self.searchNode(x2,y2)
-    i = -1
-    if a == -1 and b == -1:
-      i = len(self.nodes)
-      self.nodes += [[]]
-    elif (a == -1) + (b == -1) == 1:
-      i = a + b + 1 # a or b
-    elif a != b:
-      c = min(a,b)
-      d = max(a,b)
-      self.nodes[c] += self.nodes[d]
-      del self.nodes[d]
-      return
-    if not (((x,y) in self.nodes[i]) or x == -1 or y == -1):
-      self.nodes[i] += [(x,y)]
-    if not ((x2,y2) in self.nodes[i] or x2 == -1 or y2 == -1):
-      self.nodes[i] += [(x2,y2)]
-  def interpret(self, data, start, end):
-    # -----
-    def datasearch(a, b=-1): # search for all resistors connecting a and b
-      r = []
-      for i in range(len(data)):
-        if data[i].a == a:
-          if data[i].b == b or b == -1:
-            r += [i]
-        elif data[i].b == a:
-          if data[i].a == b or b == -1:
-            r += [i]
-      return r
-    n = lambda i, l: data[i].a+data[i].b-l # i. resistor connects l and ... nodes
-    def without(arr):
-      r = []
-      for e in range(len(data)):
-        if not e in arr:
-          r += [data[e]]
-      return r
-    def processDelta():
-      for i in range(len(self.nodes)):
-        for a in datasearch(i):
-          an = n(a, i)
-          for b in datasearch(an):
-            bn = n(b, an)
-            for c in datasearch(bn):
-              cn = n(c,bn)
-              if cn == i:
-                #print(i,an,bn,cn,data[a],data[b],data[c])
-                ndata = without((a,b,c))
-                da = Delta(data[a], data[b], data[c], 1)
-                db = Delta(data[a], data[b], data[c], 2)
-                dc = Delta(data[a], data[b], data[c], 3)
-                da.a, db.a, dc.a = an, cn, bn
-                da.b, db.b, dc.b = len(self.nodes), len(self.nodes), len(self.nodes)
-                ndata += [da, db, dc]
-                return ndata
-      return None
-    def processSeries():
-      for i in range(len(self.nodes)):
-        if i != start and i != end:
-          d = datasearch(i)
-          if len(d) == 2:
-            ndata = without(d)
-            nn = Series(data[d[0]], data[d[1]])
-            nn.a, nn.b = n(d[0], i), n(d[1], i)
-            ndata += [nn]
-            return ndata
-      return None
-    def processParallel():
-      for e in range(len(data)):
-        for f in range(len(data)):
-          if e != f and (data[e].a == data[f].a and data[e].b == data[f].b) or (data[e].a == data[f].b and data[e].b == data[f].a):
-            ndata = without((e,f))
-            nn = Parallel(data[e], data[f])
-            nn.a, nn.b = data[e].a, data[e].b
-            ndata += [nn]
-            return ndata
-      return None
-    def processUnnecessary():
-      rmvd = []
-      for i in range(len(self.nodes)):
-        if i != start and i != end:
-          a = datasearch(i)
-          if len(a) == 1:
-            rmvd += a
-      for i in range(len(data)):
-        if data[i].a == data[i].b:
-          rmvd += [i]
-      return without(rmvd) if rmvd else None
-    # -----
-    toProcess = [processUnnecessary, processSeries, processParallel, processDelta]
-    odata = []
-    q = lambda x: x if (not x is None) else data
-    while odata != data:
-      odata = data[:]
-      #print(odata)
-      for i in range(len(toProcess)):
-        r = toProcess[i]()
-        if not r is None:
-          data = r
-          if toProcess[i] == processDelta:
+    def __init__(self):
+        self.nodes = {}
+        self.node_voltages = []
+
+    def reset_nodes(self):
+        self.nodes = []
+
+    def search_node(self, x_coord, y_coord):
+        for i, ele in enumerate(self.nodes):
+            if (x_coord, y_coord) in ele:
+                return i
+        return -1
+
+    def add_node(self, x_coord, y_coord, x2_coord=-1, y2_coord=-1):
+        print(self.nodes)
+        node_index = self.search_node(x_coord, y_coord)
+        node2_index = self.search_node(x2_coord, y2_coord)
+        print(node_index, node2_index)
+        new_index = -1
+        if node_index == -1 and node2_index == -1:
+            new_index = len(self.nodes)
             self.nodes += [[]]
-          break
-    if not data:
-      if start == end:
-        return Primitive(0)
-      return Primitive(math.inf)
-    if len(data) == 1:
-      return data[0]
-    raise Error()
-  def calc_voltages(self, c, v, x): # calced
-    if str(c) == 'Primitive':
-      return
-    def cv(p, d): # calc voltage(parent, data)
-      if str(d) == 'Primitive':
-        return
-      r = False
-      for e in d.cs:
-        r = cv(p,e)
-      if (not d.U is None) and ((p.nv[d.a] is None) != (p.nv[d.b] is None)) and d.a != c.b and d.b != c.b: # '!=' = 'xor'
-        if p.nv[d.a] is None:
-          p.nv[d.a] = p.nv[d.b] + d.U
+        elif (node_index == -1) != (node2_index == -1):
+            new_index = node_index + node2_index + 1  # a or b
+        elif node_index != node2_index:
+            self.nodes[node_index] += self.nodes[node2_index]
+            del self.nodes[node2_index]
+            return
+        print(new_index)
+        if (x_coord, y_coord) not in self.nodes[new_index] and \
+                -1 not in (x_coord, y_coord):
+            self.nodes[new_index] += [(x_coord, y_coord)]
+        if (x2_coord, y2_coord) not in self.nodes[new_index] and \
+                -1 not in (x2_coord, y2_coord):
+            self.nodes[new_index] += [(x2_coord, y2_coord)]
+
+    def interpret(self, data, start, end):
+        # -----
+        def datasearch(node_a, node_b=-1):
+            '''look for all resistors connecting node_a and node_b'''
+            results = []
+            for i, connection in enumerate(data):
+                if connection.node_a == node_a:
+                    if node_b in (connection.node_b, -1):
+                        results += [i]
+                elif connection.node_b == node_a:
+                    if node_b in (connection.node_a, -1):
+                        results += [i]
+            return results
+
+        def other_side(index, known):
+            '''index of element connects known node and returned node'''
+            return data[index].node_a + data[index].node_b - known
+
+        def without(arr):
+            return list(map(lambda x: x[1],
+                            filter(lambda x: x[0] not in arr,
+                                   enumerate(arr))))
+
+        def process_delta():
+            for first_node in range(len(self.nodes)):
+                for first in datasearch(first_node):
+                    second_node = other_side(first, first_node)
+                    for second in datasearch(second_node):
+                        third_node = other_side(second, second_node)
+                        for third in datasearch(third_node):
+                            fourth_node = other_side(third, third_node)
+                            if fourth_node == first_node:
+                                ndata = without((first, second, third))
+                                delta_a = Delta(data[first], data[second],
+                                                data[third], 1)
+                                delta_b = Delta(data[first], data[second],
+                                                data[third], 2)
+                                delta_c = Delta(data[first], data[second],
+                                                data[third], 3)
+                                delta_a.node_a, delta_b.node_a, \
+                                    delta_c.node_a = first_node, third_node, \
+                                    second_node
+                                delta_a.node_b, delta_b.node_b, \
+                                    delta_c.node_b = [len(self.nodes)] * 3
+                                ndata += [delta_a, delta_b, delta_c]
+                                return ndata
+            return None
+
+        def process_series():
+            for node in range(len(self.nodes)):
+                if node not in (start, end):
+                    connections = datasearch(node)
+                    if len(connections) == 2:
+                        ndata = without(connections)
+                        series = Series(data[connections[0]],
+                                        data[connections[1]])
+                        series.node_a, series.node_b = \
+                            other_side(connections[0], node), \
+                            other_side(connections[1], node)
+                        ndata += [series]
+                        return ndata
+            return None
+
+        def process_parallel():
+            for index, connection in enumerate(data):
+                for index2, connection2 in enumerate(data):
+                    nodes_of_conn = connection.node_a, connection.node_b
+                    nodes_of_conn2 = connection2.node_a, connection2.node_b
+                    if index != index2 and nodes_of_conn in \
+                            (nodes_of_conn2, nodes_of_conn2[::-1]):
+                        ndata = without((index, index2))
+                        parallel = Parallel(connection, connection2)
+                        parallel.node_a, parallel.node_b = \
+                            connection.node_a, connection.node_b
+                        ndata += [parallel]
+                        return ndata
+            return None
+
+        def process_unnecessary():
+            removed = []
+            for node in range(len(self.nodes)):
+                if node not in (start, end):
+                    connections = datasearch(node)
+                    if len(connections) == 1:
+                        removed += connections
+            for connection_i, connection in enumerate(data):
+                if connection.node_a == connection.node_b:
+                    removed += [connection_i]
+            return without(removed) if removed else None
+        # -----
+        processors = [process_unnecessary, process_series,
+                      process_parallel, process_delta]
+        old_data = []
+        while old_data != data:
+            old_data = data[:]
+            # print(odata)
+            for processor in processors:
+                ndata = processor()
+                if ndata is not None:
+                    data = ndata
+                    if processor == process_delta:  # pylint: disable=W0143
+                        self.nodes += [[]]
+                    break
+        if not data:
+            if start == end:
+                return Primitive(0)
+            return Primitive(math.inf)
+        if len(data) == 1:
+            return data[0]
+        raise RuntimeError('Can\'t find a processor to simplify the circuit')
+
+    def calc_voltages(self, circuit, unit, amount):  # calced
+        if str(circuit) == 'Primitive':
+            return
+
+        def cv(whole, part):  # calc voltage(parent, data)
+            if str(part) == 'Primitive':
+                return None
+            buffer = False
+            for component in part.components:
+                buffer = cv(whole, component)
+            if (part.ph_u is not None) and \
+                    ((whole.node_voltages[part.node_a] is None)
+                     != (whole.node_voltages[part.node_b] is None)) and \
+                    part.node_a != circuit.node_b and \
+                    part.node_b != circuit.node_b:  # '!=' = 'xor'
+                if whole.node_voltages[part.node_a] is None:
+                    whole.node_voltages[part.node_a] = \
+                        whole.node_voltages[part.node_b] + part.ph_u
+                else:
+                    whole.node_voltages[part.node_b] = \
+                        whole.node_voltages[part.node_a] + part.ph_u
+                return True
+            if part.ph_u is None and \
+                None not in (whole.node_voltages[part.node_a],
+                             whole.node_voltages[part.node_b]):
+                part.ph_u = abs(whole.node_voltages[part.node_a]
+                                - whole.node_voltages[part.node_b])
+                return True
+            return buffer
+        self.node_voltages = [None] * len(self.nodes)
+        self.node_voltages[circuit.node_a] = 0
+        # nv[c.node_b] = u
+        if unit == 'V':
+            circuit.ph_u = amount
+        elif unit == 'A':
+            circuit.ph_i = amount
         else:
-          p.nv[d.b] = p.nv[d.a] + d.U
-        return True
-      elif d.U is None and (not ((p.nv[d.a] is None) or (p.nv[d.b] is None))):
-        d.U = abs(p.nv[d.a]-p.nv[d.b])
-        return True
-      return r
-    self.nv = []
-    for e in range(len(self.nodes)):
-      self.nv += [None]
-    self.nv[c.a] = 0
-    #nv[c.b] = u
-    if v:
-      c.U = x
-    else:
-      c.I = x
-    while cv(self, c):
-      pass
+            raise RuntimeError(f'Not known unit "{unit}"" to calc.')
+        while cv(self, circuit):
+            pass
 
-class pos:
-  def __init__(self, *a):
-    while len(a) == 1:
-      a = a[0]
-    self.x = int(a[0])
-    self.y = int(a[1])
-    if len(a) > 2:
-      self.p = int(a[2])
-    else:
-      self.p = -1
-  @property
-  def r(self):
-    return (self.x, self.y, self.p)
-  @property
-  def q(self):
-    return (self.x, self.y)
-  @r.setter
-  def r(self, r):
-    self.x, self.y, self.p = r
-  @q.setter
-  def q(self, q):
-    self.x, self.y = q
-  def __repr__(self):
-    if self.p == -1:
-      return 'pos'+repr(self.q)
-    else:
-      return 'pos'+repr(self.r)
 
-def ttoposa(t):  # tel (two element) to pos A
-  return pos(t.x, t.y)
+class Pos:
+    def __init__(self, *a):
+        while len(a) == 1:
+            a = a[0]
+        self.x_coord = int(a[0])
+        self.y_coord = int(a[1])
+        if len(a) > 2:
+            self.orient = int(a[2])
+        else:
+            self.orient = -1
 
-def ttoposb(t):
-  if t.p == 0:
-    return pos(t.x+1, t.y)
-  else:
-    return pos(t.x, t.y+1)
+    @property
+    def t_tuple(self):
+        return (self.x_coord, self.y_coord, self.orient)
 
-def pround(x, y, s, xy):
-  if xy == 2:
-    x /= s
-    y /= s
-    sx = x%1-0.5
-    sy = y%1-0.5
-    x //= 1
-    y //= 1
-    if abs(sx) > abs(sy):
-      if sx < 0:
-        return pos(x, y, 1)
-      else:
-        return pos(x+1, y, 1)
-    else:
-      if sy < 0:
-        return pos(x, y, 0)
-      else:
-        return pos(x, y+1, 0)
-  else:
-    x = ((x+0.5*s)//s)
-    y = ((y+0.5*s)//s)
-    return pos(x, y)
+    @property
+    def o_tuple(self):
+        return (self.x_coord, self.y_coord)
 
-class element:
-  xy = 1
-  def __str__(self):
-    return self.__class__.__name__
-  def __init__(self, parent):
-    self.addr = super().__repr__().split('0x')[1][:-1]
-    self.parent = parent
-  @property
-  def info(self):
-    return {}
-  def __repr__(self):
-    return str(vars(self))
-  def render(self, x, y, s):
-    self.parent.w.create_rectangle(x, y, x+s, y+s)
-  def onkey(self, ev):
+    @t_tuple.setter
+    def t_tuple(self, t_tuple):
+        self.x_coord, self.y_coord, self.orient = t_tuple
+
+    @o_tuple.setter
+    def o_tuple(self, o_tuple):
+        self.x_coord, self.y_coord = o_tuple
+
+    def __repr__(self):
+        return 'pos' + \
+                repr(self.o_tuple if self.orient == -1 else self.t_tuple)
+
+
+def ttoposa(tel):  # tel (two element) to pos A
+    return Pos(tel.x_coord, tel.y_coord)
+
+
+def ttoposb(tel):
+    return Pos(tel.x_coord + 1, tel.y_coord) if tel.orient == 0 else \
+           Pos(tel.x_coord, tel.y_coord + 1)
+
+
+def pround(x_coord, y_coord, size, is_tel=False):
+    if is_tel:
+        x_coord /= size
+        y_coord /= size
+        x_shift = x_coord % 1 - 0.5
+        y_shift = y_coord % 1 - 0.5
+        x_coord //= 1
+        y_coord //= 1
+        if abs(x_shift) > abs(y_shift):
+            return Pos(x_coord, y_coord, 1) if x_shift < 0 else \
+                Pos(x_coord + 1, y_coord, 1)
+        return Pos(x_coord, y_coord, 0) if y_shift < 0 else \
+            Pos(x_coord, y_coord + 1, 0)
+    x_coord = ((x_coord + 0.5 * size) // size)
+    y_coord = ((y_coord + 0.5 * size) // size)
+    return Pos(x_coord, y_coord)
+
+
+class Element:
+    def __str__(self):
+        return self.__class__.__name__
+
+    def __init__(self, parent):
+        self.addr = super().__repr__().split('0x')[1][:-1]
+        self.parent = parent
+
+    @property
+    def info(self):
+        return {}
+
+    def __repr__(self):
+        return str(vars(self))
+
+    def onkey(self, event):
+        pass
+
+
+class OElement(Element):
+    def render(self, x_coord, y_coord, size):
+        pass
+
+
+class TElement(Element):
+    def render(self, x_coord, y_coord, size, position):
+        pass
+
+
+class Pin(OElement):
+    def __init__(self, parent, color='black'):
+        super().__init__(parent)
+        self.color = color
+        deleted = []
+        for oel in self.parent.oels:
+            if str(self.parent.oels[oel]) == str(self):
+                deleted += [oel]
+        for oel in deleted:
+            del self.parent.oels[oel]
+
+    def render(self, x_coord, y_coord, size):
+        radius = size * 0.1
+        self.parent.w.create_arc(
+            x_coord - radius, y_coord - radius,
+            x_coord + radius, y_coord + radius,
+            start=0, extent=180,
+            outline=self.color, fill=self.color)
+        self.parent.w.create_arc(x_coord - radius, y_coord - radius,
+                                 x_coord + radius, y_coord + radius,
+                                 start=180, extent=180,
+                                 outline=self.color, fill=self.color)
+        radius *= 2
+        self.parent.w.create_arc(x_coord - radius, y_coord - radius,
+                                 x_coord + radius, y_coord + radius,
+                                 start=0, extent=180,
+                                 outline=self.color, style='arc')
+        self.parent.w.create_arc(x_coord - radius, y_coord - radius,
+                                 x_coord + radius, y_coord + radius,
+                                 start=180, extent=180,
+                                 outline=self.color, style='arc')
+
+
+class APin(Pin):
+    def __init__(self, parent):
+        super().__init__(parent, 'blue')
+
+
+class BPin(Pin):
+    def __init__(self, parent):
+        super().__init__(parent, 'red')
+
+
+class Wire(TElement):
+    def render(self, x_coord, y_coord, size, position):
+        self.parent.w.create_line(x_coord, y_coord, x_coord if position == 1
+                                  else (x_coord + size),
+                                  y_coord if position == 0
+                                  else (y_coord + size))
+
+
+class CanceledError(Exception):
     pass
 
-class apin(element):
-  xy = 1
-  def __init__(self, parent):
-    self.parent = parent
-    d = []
-    for e in self.parent.oels.keys():
-      if str(self.parent.oels[e]) == 'apin':
-        d += [e]
-    for e in d:
-      del self.parent.oels[e]
-  def render(self, x, y, s):
-    r = s*0.1
-    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='blue',fill='blue')
-    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='blue',fill='blue')
-    r *= 2
-    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='blue',style=ARC)
-    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='blue',style=ARC)
-    
-class bpin(element):
-  xy = 1
-  def __init__(self, parent):
-    self.parent = parent
-    d = []
-    for e in self.parent.oels.keys():
-      if str(self.parent.oels[e]) == 'bpin':
-        d += [e]
-    for e in d:
-      del self.parent.oels[e]
-  def render(self, x, y, s):
-    r = s*0.1
-    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='red',fill='red')
-    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='red',fill='red')
-    r *= 2
-    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=0,extent=180,outline='red',style=ARC)
-    self.parent.w.create_arc(x-r,y-r,x+r,y+r,start=180,extent=180,outline='red',style=ARC)
 
-class wire(element):
-  xy = 2
-  def render(self, x, y, s, p):
-    self.parent.w.create_line(x, y, x if p == 1 else (x + s), y if p == 0 else (y + s))
-  @property
-  def R(self):
-    return 0
+class Resistor(Primitive, TElement):
+    resistor_i = 1
+    oR = None
 
-resistor_i = 1
+    def __init__(self, parent, uid=None):
+        super().__init__(parent)
+        self.parent = parent
+        if uid is None:
+            uid = Resistor.resistor_i
+            Resistor.resistor_i += 1
+        self.uid = uid
+        self.get_r()
+        self.ph_u = None
 
-class resistor(element, Primitive):
-  xy = 2
-  oR = None
-  def __init__(self, parent, i=None):
-    self.parent = parent
-    if i is None:
-      global resistor_i
-      i = resistor_i
-      resistor_i += 1
-    self.i = i
-    self.getR()
-    self.U = None
-  def getR(self):
-    a = None
-    a = resistor.oR
-    a = self.parent.getFloat('Value of R' + str(self.i) + ' [' + getUnit('R') + ']')
-    if a is None:
-      raise Exception('canceled')
-    resistor.oR = a
-    self.R = a
-  @property
-  def info(self):
-    if (not self.I is None) and (not self.U is None):
-      return {'R': self.R, 'U': self.U, 'I': self.I}
-    else:
-      return {'R': self.R}
-  def __repr__(self):
-    return '{'+str(self.i)+'}'
-  def render(self, x, y, s, p):
-    if p == 0:
-      self.parent.w.create_line(x,y,x+0.25*s,y)
-      self.parent.w.create_line(x+0.75*s,y,x+s,y)
-      self.parent.w.create_line(x+0.25*s,y+0.2*s,x+0.75*s,y+0.2*s)
-      self.parent.w.create_line(x+0.25*s,y-0.2*s,x+0.75*s,y-0.2*s)
-      self.parent.w.create_line(x+0.25*s,y+0.2*s,x+0.25*s,y-0.2*s)
-      self.parent.w.create_line(x+0.75*s,y+0.2*s,x+0.75*s,y-0.2*s)
-      self.parent.w.create_text(x+0.5*s,y,text=str(self.i))
-    if p == 1:
-      self.parent.w.create_line(x,y,x,y+0.25*s)
-      self.parent.w.create_line(x,y+0.75*s,x,y+s)
-      self.parent.w.create_line(x+0.2*s,y+0.25*s,x+0.2*s,y+0.75*s)
-      self.parent.w.create_line(x-0.2*s,y+0.25*s,x-0.2*s,y+0.75*s)
-      self.parent.w.create_line(x+0.2*s,y+0.25*s,x-0.2*s,y+0.25*s)
-      self.parent.w.create_line(x+0.2*s,y+0.75*s,x-0.2*s,y+0.75*s)
-      self.parent.w.create_text(x,y+0.5*s,text=str(self.i), angle=270)
+    def get_r(self):
+        new_value = None
+        new_value = Resistor.oR
+        new_value = self.parent.getFloat(
+            'Value of R' + str(self.uid) + ' [' + get_unit('R') + ']')
+        if new_value is None:
+            raise CanceledError
+        Resistor.oR = new_value
+        self.ph_r = new_value
+
+    @property
+    def info(self):
+        return {'R': self.ph_r, 'U': self.ph_u, 'I': self.ph_i} \
+            if (self.ph_i is not None) and (self.ph_u is not None) \
+            else {'R': self.ph_r}
+
+    def __repr__(self):
+        return '{' + str(self.uid) + '}'
+
+    def render(self, x_coord, y_coord, size, position):
+        if position == 0:
+            self.parent.w.create_line(x_coord, y_coord,
+                                      x_coord + 0.25 * size, y_coord)
+            self.parent.w.create_line(x_coord + 0.75 * size, y_coord,
+                                      x_coord + size, y_coord)
+            self.parent.w.create_line(
+                x_coord + 0.25 * size, y_coord + 0.2 * size,
+                x_coord + 0.75 * size, y_coord + 0.2 * size)
+            self.parent.w.create_line(
+                x_coord + 0.25 * size, y_coord - 0.2 * size,
+                x_coord + 0.75 * size, y_coord - 0.2 * size)
+            self.parent.w.create_line(
+                x_coord + 0.25 * size, y_coord + 0.2 * size,
+                x_coord + 0.25 * size, y_coord - 0.2 * size)
+            self.parent.w.create_line(
+                x_coord + 0.75 * size, y_coord + 0.2 * size,
+                x_coord + 0.75 * size, y_coord - 0.2 * size)
+            self.parent.w.create_text(x_coord + 0.5 * size, y_coord,
+                                      text=str(self.uid))
+        if position == 1:
+            self.parent.w.create_line(x_coord, y_coord,
+                                      x_coord, y_coord + 0.25 * size)
+            self.parent.w.create_line(x_coord, y_coord + 0.75 * size,
+                                      x_coord, y_coord + size)
+            self.parent.w.create_line(
+                x_coord + 0.2 * size, y_coord + 0.25 * size,
+                x_coord + 0.2 * size, y_coord + 0.75 * size)
+            self.parent.w.create_line(
+                x_coord - 0.2 * size, y_coord + 0.25 * size,
+                x_coord - 0.2 * size, y_coord + 0.75 * size)
+            self.parent.w.create_line(
+                x_coord + 0.2 * size, y_coord + 0.25 * size,
+                x_coord - 0.2 * size, y_coord + 0.25 * size)
+            self.parent.w.create_line(
+                x_coord + 0.2 * size, y_coord + 0.75 * size,
+                x_coord - 0.2 * size, y_coord + 0.75 * size)
+            self.parent.w.create_text(
+                x_coord, y_coord + 0.5 * size, text=str(self.uid), angle=270)
+
 
 class Board:
-  class stop:
-    stop = False
-    def get():
-      return Board.stop.stop
-    def set(x):
-      Board.stop.stop = x
-  def __init__(self, WIDTH=1280, HEIGHT=720, s=40):
-    self.SIZE = pos(WIDTH, HEIGHT)
-    self.s = s  # size of one element
-    self.tels = {}  # elements with (x, y, p)
-    self.oels = {}  # elements with (x, y)
-    self.tk = Tk()
-    self.w = Canvas(self.tk, width=WIDTH, height=HEIGHT, bd=0, highlightthickness=0)
-    self.me = [self]
-    self.makeTk()
-    self.w.pack(expand=True)
-    self.w.focus_set()
-    self.in_motion = pos(-1,-1)
-    self.shift = pos(0, 0)
-    self.newpos = pos(0, 0)
-    self.newself = False
-    self.x = 0
-    self.y = 0
-    self.nodes = Nodes()
-    self.lastfile = None
-    self.queue = []
-    self.powerv = True # power voltage
-    self.power = 12
-    self.crc = Primitive(math.inf) # CiRCuit :D easy to remember
-  def setPower(self, v, x):
-    if x is None:
-      return
-    self.powerv = v
-    self.power = x
-  def withClick(self, x):
-    self.queue += [x]
-  def configure(self, ev):
-    self.SIZE.x = ev.width
-    self.SIZE.y = ev.height
-    self.w.config(width=ev.width, height=ev.height)
-  def dump(self):
-    a, b = self.tk, self.w
-    self.tk, self.w = 0, 0
-    r = pickle.dumps(self)
-    self.tk, self.w = a, b
-    return r
-  def makeTk(self):
-    self.tk.title('Resistorer')
-    self.w.bind('<Button 1>', self.onclick1)
-    self.w.bind('<ButtonRelease-1>', self.onrel1)
-    self.w.bind('<B1-Motion>', self.motion1)
-    self.w.bind('<KeyPress>', self.onkey)
-    self.tk.bind('<Configure>', self.configure)
-    self.tk.protocol('WM_DELETE_WINDOW', lambda:self.stop.set(True))
-    #-----
-    mb = Menu(self.tk)
-    fm = Menu(mb, tearoff=0)
-    fm.add_command(label='New', command=self.newSketch, accelerator='Shift+Del')
-    fm.add_command(label='Open', command=self.open, accelerator='Ctrl+O')
-    fm.add_command(label='Save', command=self.save, accelerator='Ctrl+S')
-    fm.add_command(label='Save as...', command=lambda:self.save(-1), accelerator='Ctrl+Shift+S')
-    fm.add_separator()
-    fm.add_command(label='Exit', command=lambda:self.stop.set(True), accelerator='Alt+F4')
-    mb.add_cascade(label='File', menu=fm)
-    #-----
-    em = Menu(mb, tearoff=0)
-    ae = lambda t: lambda:self.withClick(lambda p:self.new(t,p[0],p[1])) # add element
-    em.add_command(label='Add a wire', command=ae(wire), accelerator='F2')
-    em.add_command(label='Add a resistor', command=ae(resistor), accelerator='F3')
-    em.add_command(label='Add a + power supply', command=ae(apin), accelerator='F4')
-    em.add_command(label='Add a - power supply', command=ae(bpin), accelerator='F5')
-    em.add_separator()
-    em.add_command(label='Delete element', command=lambda:self.withClick(lambda p:self.delete(p[0],p[1])), accelerator='Del')
-    em.add_command(label='Delete all', command=self.newSketch, accelerator='Shift+Del')
-    mb.add_cascade(label='Edit', menu=em)
-    #-----
-    vm = Menu(mb, tearoff=0)
-    vm.add_command(label='Zoom in', command=lambda:self.zoom(+1), accelerator='+')
-    vm.add_command(label='Zoom out', command=lambda:self.zoom(-1), accelerator='-')
-    vm.add_command(label='Count resistors', command=self.count, accelerator='\'')
-    mb.add_cascade(label='View', menu=vm)
-    #-----
-    pm = Menu(mb, tearoff=0)
-    pm.add_command(label='Voltage', command=lambda:self.setPower(True, self.getFloat('Voltage ['+getUnit('U')+']')))
-    pm.add_command(label='Current', command=lambda:self.setPower(False, self.getFloat('Current ['+getUnit('I')+']')))
-    mb.add_cascade(label='Power supply', menu=pm)
-    #-----
-    dm = Menu(mb, tearoff=0)
-    dm.add_command(label='Open a console', command=self.interactive, accelerator='\\')
-    self.auto = BooleanVar()
-    self.auto.set(True)
-    dm.add_checkbutton(label='Auto calculating', onvalue=True, offvalue=False, variable=self.auto)
-    dm.add_command(label='Calculate', command=self.calc, accelerator='Enter')
-    mb.add_cascade(label='Debug', menu=dm)
-    #-----
-    self.tk.config(menu=mb)
-  def load(self, data):
-    a, b = self.tk, self.w
-    r = pickle.loads(data)
-    r.tk, r.w = a, b
-    r.makeTk()
-    self.newself = r
-  def open(self, file=None):
-    if file is None:
-      file = filedialog.askopenfilename(filetypes=(('sketch files','*.sk'),('all files','*.*')))
-    if not file:
-      return False
-    f = open(file, mode='rb')
-    self.load(f.read())
-    f.close()
-    self.newself.lastfile = file
-    return True
-  def save(self, file=None): # file=-1 for force asking
-    if (file is None) and (not self.lastfile is None):
-      file = self.lastfile
-    elif (file is None) or (file == -1):
-      file = filedialog.asksaveasfilename(filetypes=(('sketch files','*.sk'),('all files','*.*')))
-    if not file:
-      return False
-    f = open(file, mode='wb')
-    f.write(self.dump())
-    self.lastfile = file
-    f.close()
-    return True
-  def new(self, cl, x, y):
-    try:
-      if cl.xy == 2:
-        p = pround(x, y, self.s, 2)
-        self.tels[p.r] = cl(self)
-      if cl.xy == 1:
-        p = pround(x, y, self.s, 1)
-        self.oels[p.q] = cl(self)
-    except Exception as a:
-      if a.args[0] == 'canceled':
-        pass
-      else:
-        raise
-  def point(self, p):
-    self.w.create_oval(p.x, p.y, p.x, p.y, width = 1, fill = 'black')
-  def render(self):
-    if self.stop.get():
-      exit()
-    self.w.delete('all')
-    for x in range(self.x//self.s, (self.SIZE.x+self.x)//self.s+1):
-      for y in range(self.y//self.s, (self.SIZE.y+self.y)//self.s+1):
-        self.point(pos(x*self.s-self.x, y*self.s-self.y))
-    txt = ''
-    for p, e in self.tels.items():
-      if str(e) == 'resistor':
-        txt += repr(e)
-        first = True
-        for f, g in e.info.items():
-          if first:
-            first = False
-          else:
-            txt += len(repr(e))*' '
-          txt += ' ' + f + '=' + str(g) + ' ' + getUnit(f) + '\n'
-        if txt[-1] != '\n':
-          txt += '\n'
-      p = pos(p)
-      if p.r != self.in_motion.r:
-        e.render(p.x*self.s-self.x, p.y*self.s-self.y, self.s, p.p)
-      else:
-        e.render(self.newpos.x-self.shift.x, self.newpos.y-self.shift.y, self.s, p.p)
-    txt += 'R\N{LATIN SMALL LETTER Z WITH STROKE}='+('\N{INFINITY}' if self.crc.R == math.inf else str(self.crc.R))
-    u = str(self.power if self.powerv else (0 if math.isnan(self.crc.R * self.power) else (self.crc.R * self.power if self.crc.R * self.power != math.inf else '\N{INFINITY}')))
-    i = str(self.power if (not self.powerv) else ('\N{INFINITY}' if (self.crc.R == 0) else (self.power / self.crc.R)))
-    txt += ' U=' + u + ' I=' + i
-    self.w.create_text(0,self.SIZE.y,font='TkFixedFont',anchor='sw',text=txt)
-    for p, e in self.oels.items():
-      p = pos(p)
-      e.render(p.x*self.s-self.x, p.y*self.s-self.y, self.s)
-    self.tk.update_idletasks()
-    self.tk.update()
-    if self.auto.get():
-      self.calc()
-    if self.newself:
-      return self.newself
-    return self
-  def onclick1(self, ev):
-    if self.queue:
-      self.queue[0]((ev.x, ev.y))
-      self.queue = self.queue[1:]
-    self.in_motion = pround(ev.x+self.x, ev.y+self.y, self.s, 2)
-    self.shift = pos(ev.x+self.x-self.in_motion.x*self.s, ev.y+self.y-self.in_motion.y*self.s)
-    self.newpos = pos(ev.x, ev.y)
-  def onrel1(self, ev):
-    if self.in_motion.r in self.tels.keys() and pround(ev.x+self.x, ev.y+self.y, self.s, 2).r != self.in_motion.r:
-      self.tels[pround(ev.x+self.x, ev.y+self.y, self.s, 2).r] = self.tels[self.in_motion.r]
-      self.tels.pop(self.in_motion.r)
-    self.in_motion = pos(-1, -1)
-    self.shift = pos(-1,-1)
-  def motion1(self, ev):
-    self.newpos = pos(ev.x, ev.y)
-  def updateNode(self):
-    self.nodes.resetNode()
-    for e in self.oels:
-      self.nodes.addNode(e[0], e[1])
-    for e in self.tels:
-      if str(self.tels[e]) == 'wire':
-        a = ttoposa(pos(e))
-        b = ttoposb(pos(e))
-        self.nodes.addNode(a.x,a.y,b.x,b.y)
-      else:
-        a = ttoposa(pos(e))
-        b = ttoposb(pos(e))
-        self.nodes.addNode(a.x,a.y)
-        self.nodes.addNode(b.x,b.y)
-  def calc_res(self): # calc resistorers
-    self.updateNode()
-    r = []
-    for e in self.tels:
-      if str(self.tels[e]) == 'resistor':
-        a=ttoposa(pos(e))
-        b=ttoposb(pos(e))
-        a=self.nodes.searchNode(a.x, a.y)
-        b=self.nodes.searchNode(b.x, b.y)
-        self.tels[e].a = a
-        self.tels[e].b = b
-        r += [self.tels[e]]
-    return r
-  def calc(self):
-    b = self.calc_res()
-    start = end = -1
-    for e in self.tels.values():
-      e.U = None
-    for e in self.oels.keys():
-      if str(self.oels[e]) == 'apin':
-        start = self.nodes.searchNode(e[0],e[1])
-      if str(self.oels[e]) == 'bpin':
-        end = self.nodes.searchNode(e[0],e[1])
-    if start == -1 or end == -1:
-      if not self.auto.get():
-        messagebox.showerror('Error', 'NO PINS SPECIFIED')
-      self.crc = Primitive(math.inf)
-      return
-    a = self.calc_res()
-    a = self.nodes.interpret(a, start, end)
-    if not self.auto.get():
-      messagebox.showinfo('Result', repr(a))
-      messagebox.showinfo('Result', repr(a.R))
-    self.crc = a
-    self.nodes.calc_voltages(a, self.powerv, self.power)
-  def newSketch(self):
-      self.tels = {}
-      self.oels = {}
-  def count(self):
-    global resistor_i
-    resistor_i = 1
-    for e in self.tels.values():
-      if str(e) is 'resistor':
-        e.i = resistor_i
-        resistor_i += 1
-  def zoom(self, x):
-    s = self.s
-    self.s += x
-    self.x += self.x//s
-    self.y += self.y//s
-  def interactive(self):
-      code.InteractiveConsole(vars()).interact()
-  def delete(self, x, y):
-    if pround(x, y, self.s, 2).r in self.tels.keys():
-      del self.tels[pround(x, y, self.s, 2).r]
-    if pround(x, y, self.s, 1).q in self.oels.keys():
-      del self.oels[pround(x, y, self.s, 1).q]
-  def onkey(self, ev):
-    #print(ev, ev.state)
-    ev.x += self.x
-    ev.y += self.y
-    if len(ev.keysym)>1 and ev.keysym[:1] == 'F':
-      nr = int(ev.keysym[1:])-1
-      gates = [element, wire, resistor, apin, bpin]
-      if len(gates) <= nr:
-        messagebox.showerror('Error', 'NO F'+str(nr+1)+' ELEMENT')
-      else:
-        b = gates[nr]
-        self.new(b, ev.x, ev.y)
-    if ev.keysym == 'Enter' or ev.keysym == 'Return':
-      self.calc()
-    if ev.keysym == 'backslash':
-      self.interactive()
-    if ev.keysym == 'apostrophe' or ev.keysym == 'quoteright':
-      self.count()
-    if (ev.state&1)!=0 and ev.keysym == 'Delete':  # shift + del
-      self.newSketch()
-    if ev.keysym == 'plus':
-      self.zoom(+1)
-    if ev.keysym == 'minus':
-      self.zoom(-1)
-    if ev.keysym == 'Left':
-      self.x -= 1
-    if ev.keysym == 'Right':
-      self.x += 1
-    if ev.keysym == 'Up':
-      self.y -= 1
-    if ev.keysym == 'Down':
-      self.y += 1
-    if ev.keysym == 'Delete':
-      self.delete(ev.x, ev.y)
-    if pround(ev.x, ev.y, self.s, 2).r in self.tels.keys():
-        self.tels[pround(ev.x, ev.y, self.s, 2).r].onkey(ev)
-    if pround(ev.x, ev.y, self.s, 1).q in self.oels.keys():
-        self.oels[pround(ev.x, ev.y, self.s, 1).q].onkey(ev)
-    if ev.keysym.upper() == 'S' and ev.state == 0b100:  # Ctrl+S
-      self.save()
-    if ev.keysym.upper() == 'S' and ev.state == 0b101:  # Ctrl+Shift+S
-      self.save(-1)
-    if ev.keysym.upper() == 'O' and ev.state == 0b100:  # Ctrl+O
-      self.open()
-  def getFloat(self, msg):
-    a = simpledialog.askfloat('Input', msg, parent=self.tk, minvalue=0.0)
-    self.w.focus_set()
-    return a
+    def __init__(self, WIDTH=1280, HEIGHT=720, s=40):
+        self.size = Pos(WIDTH, HEIGHT)
+        self.elsize = s  # size of one element
+        self.tels = {}  # elements with (x, y, p)
+        self.oels = {}  # elements with (x, y)
+        self.tkroot = tk.Tk()
+        self.canvas = tk.Canvas(self.tkroot, width=WIDTH,
+                                height=HEIGHT, bd=0, highlightthickness=0)
+        self.aself = [self]
+        self.make_tk()
+        self.canvas.pack(expand=True)
+        self.canvas.focus_set()
+        self.in_motion = Pos(-1, -1)
+        self.shift = Pos(0, 0)
+        self.newpos = Pos(0, 0)
+        self.newself = False
+        self.x_coord = 0
+        self.y_coord = 0
+        self.nodes = Nodes()
+        self.lastfile = None
+        self.queue = []
+        self.powerv = True  # power voltage
+        self.power = 12
+        self.crc = Primitive(math.inf)  # CiRCuit :D easy to remember
+        self.stop = tk.BooleanVar()
+
+    def set_power(self, is_voltage, value):
+        if value is None:
+            return
+        self.powerv = is_voltage
+        self.power = value
+
+    def with_click(self, value):
+        self.queue += [value]
+
+    def configure(self, event):
+        self.size.x_coord = event.width
+        self.size.y_coord = event.height
+        self.canvas.config(width=event.width, height=event.height)
+
+    def dump(self):
+        buffer = self.tkroot, self.canvas
+        del self.tkroot, self.canvas
+        dumped = pickle.dumps(self)
+        self.tkroot, self.canvas = buffer
+        return dumped
+
+    def make_tk(self):
+        self.tkroot.title('Resistorer')
+        self.canvas.bind('<Button 1>', self.onclick1)
+        self.canvas.bind('<ButtonRelease-1>', self.onrel1)
+        self.canvas.bind('<B1-Motion>', self.motion1)
+        self.canvas.bind('<KeyPress>', self.onkey)
+        self.tkroot.bind('<Configure>', self.configure)
+        self.tkroot.protocol('WM_DELETE_WINDOW', lambda: self.stop.set(True))
+        # -----
+        menu_bar = tk.Menu(self.tkroot)
+        file_menu = tk.Menu(menu_bar, tearoff=0)
+        file_menu.add_command(label='New', command=self.new_sketch,
+                              accelerator='Shift+Del')
+        file_menu.add_command(label='Open', command=self.open,
+                              accelerator='Ctrl+O')
+        file_menu.add_command(label='Save', command=self.save,
+                              accelerator='Ctrl+S')
+        file_menu.add_command(label='Save as...',
+                              command=lambda: self.save(-1),
+                              accelerator='Ctrl+Shift+S')
+        file_menu.add_separator()
+        file_menu.add_command(label='Exit', command=lambda: self.stop.set(
+            True), accelerator='Alt+F4')
+        menu_bar.add_cascade(label='File', menu=file_menu)
+        # -----
+        edit_menu = tk.Menu(menu_bar, tearoff=0)
+
+        def add_el(_type):
+            return lambda: self.with_click(
+                lambda p: self.new(_type, p[0], p[1]))  # add element
+        edit_menu.add_command(label='Add a wire', command=add_el(Wire),
+                              accelerator='F1')
+        edit_menu.add_command(label='Add a resistor',
+                              command=add_el(Resistor), accelerator='F2')
+        edit_menu.add_command(label='Add a + power supply',
+                              command=add_el(APin), accelerator='F3')
+        edit_menu.add_command(label='Add a - power supply',
+                              command=add_el(BPin), accelerator='F4')
+        edit_menu.add_separator()
+        edit_menu.add_command(
+            label='Delete element',
+            command=lambda: self.with_click(lambda p: self.delete(p[0], p[1])),
+            accelerator='Del')
+        edit_menu.add_command(label='Delete all', command=self.new_sketch,
+                              accelerator='Shift+Del')
+        menu_bar.add_cascade(label='Edit', menu=edit_menu)
+        # -----
+        view_menu = tk.Menu(menu_bar, tearoff=0)
+        view_menu.add_command(label='Zoom in',
+                              command=lambda: self.zoom(+1), accelerator='+')
+        view_menu.add_command(label='Zoom out',
+                              command=lambda: self.zoom(-1), accelerator='-')
+        view_menu.add_command(label='Count resistors',
+                              command=self.count, accelerator='\'')
+        menu_bar.add_cascade(label='View', menu=view_menu)
+        # -----
+        power_menu = tk.Menu(menu_bar, tearoff=0)
+        power_menu.add_command(label='Voltage', command=lambda: self.set_power(
+            True, self.get_float('Voltage [' + get_unit('U') + ']')))
+        power_menu.add_command(label='Current', command=lambda: self.set_power(
+            False, self.get_float('Current [' + get_unit('I') + ']')))
+        menu_bar.add_cascade(label='Power supply', menu=power_menu)
+        # -----
+        debug_menu = tk.Menu(menu_bar, tearoff=0)
+        debug_menu.add_command(label='Open a console',
+                               command=self.interactive, accelerator='\\')
+        self.auto = tk.BooleanVar()
+        self.auto.set(True)
+        debug_menu.add_checkbutton(label='Auto calculating', onvalue=True,
+                                   offvalue=False, variable=self.auto)
+        debug_menu.add_command(label='Calculate', command=self.calc,
+                               accelerator='Enter')
+        menu_bar.add_cascade(label='Debug', menu=debug_menu)
+        # -----
+        self.tkroot.config(menu=menu_bar)
+
+    def load(self, data):
+        buffer = self.tkroot, self.canvas
+        loaded = pickle.loads(data)
+        loaded.tk, loaded.w = buffer
+        loaded.make_tk()
+        self.newself = loaded
+
+    def open(self, file=None):
+        if file is None:
+            file = filedialog.askopenfilename(filetypes=(
+                ('sketch files', '*.sk'), ('all files', '*.*')))
+        if not file:
+            return False
+        file_handle = open(file, mode='rb')
+        self.load(file_handle.read())
+        file_handle.close()
+        self.newself.lastfile = file
+        return True
+
+    def save(self, file=None):  # file=-1 for force asking
+        if (file is None) and (self.lastfile is not None):
+            file = self.lastfile
+        elif (file is None) or (file == -1):
+            file = filedialog.asksaveasfilename(filetypes=(
+                ('sketch files', '*.sk'), ('all files', '*.*')))
+        if not file:
+            return False
+        file_handle = open(file, mode='wb')
+        file_handle.write(self.dump())
+        self.lastfile = file
+        file_handle.close()
+        return True
+
+    def new(self, _type, x_coord, y_coord):
+        try:
+            if issubclass(_type, TElement):
+                self.tels[pround(x_coord, y_coord,
+                                 self.elsize, True).t_tuple] = _type(self)
+            if issubclass(_type, OElement):
+                self.oels[pround(x_coord, y_coord,
+                                 self.elsize).o_tuple] = _type(self)
+        except CanceledError:
+            pass
+
+    def point(self, pos):
+        self.canvas.create_oval(pos.x_coord, pos.y_coord,
+                                pos.x_coord, pos.y_coord,
+                                width=1, fill='black')
+
+    def render(self):
+        if self.stop.get():
+            sys.exit()
+        self.canvas.delete('all')
+        for x_coord in range(self.x_coord // self.elsize,
+                             (self.size.x_coord + self.x_coord)
+                             // self.elsize + 1):
+            for y_coord in range(self.y_coord // self.elsize,
+                                 (self.size.y_coord + self.y_coord)
+                                 // self.elsize + 1):
+                self.point(Pos(x_coord * self.elsize - self.x_coord,
+                               y_coord * self.elsize - self.y_coord))
+        txt = ''
+        for teli, tel in self.tels.items():
+            if str(tel) == 'Resistor':
+                txt += repr(tel)
+                first = True
+                for infoi, info in tel.info.items():
+                    if first:
+                        first = False
+                    else:
+                        txt += len(repr(tel)) * ' '
+                    txt += ' ' + infoi + '=' + str(info) + ' ' + \
+                           get_unit(infoi) + '\n'
+                if txt[-1] != '\n':
+                    txt += '\n'
+            teli = Pos(teli)
+            if teli.t_tuple != self.in_motion.t_tuple:
+                tel.render(teli.x_coord * self.elsize - self.x_coord,
+                           teli.y_coord * self.elsize - self.y_coord,
+                           self.elsize, teli.orient)
+            else:
+                tel.render(self.newpos.x_coord - self.shift.x_coord,
+                           self.newpos.y_coord - self.shift.y_coord,
+                           self.elsize, teli.orient)
+        txt += 'R\N{LATIN SMALL LETTER Z WITH STROKE}=' + \
+            ('\N{INFINITY}' if self.crc.ph_r == math.inf
+             else str(self.crc.ph_r))
+        u_txt = str(self.power if self.powerv else (
+            0 if math.isnan(self.crc.ph_r * self.power) else (
+                self.crc.ph_r * self.power
+                if self.crc.ph_r * self.power != math.inf
+                else '\N{INFINITY}')))
+        i_txt = str(self.power if (not self.powerv) else (
+            '\N{INFINITY}' if (self.crc.ph_r == 0) else (
+                self.power / self.crc.ph_r)))
+        txt += ' U=' + u_txt + ' I=' + i_txt
+        self.canvas.create_text(0, self.size.y_coord, font='TkFixedFont',
+                                anchor='sw', text=txt)
+        for oeli, oel in self.oels.items():
+            oeli = Pos(oeli)
+            oel.render(oeli.x_coord * self.elsize - self.x_coord,
+                       oeli.y_coord * self.elsize - self.y_coord, self.elsize)
+        self.tkroot.update_idletasks()
+        self.tkroot.update()
+        if self.auto.get():
+            self.calc()
+        if self.newself:
+            return self.newself
+        return self
+
+    def onclick1(self, event):
+        if self.queue:
+            self.queue[0]((event.x, event.y))
+            self.queue = self.queue[1:]
+        self.in_motion = pround(event.x + self.x_coord,
+                                event.y + self.y_coord,
+                                self.elsize, True)
+        self.shift = Pos(event.x + self.x_coord - self.in_motion.x_coord *
+                         self.elsize, event.y + self.y_coord -
+                         self.in_motion.y_coord * self.elsize)
+        self.newpos = Pos(event.x, event.y)
+
+    def onrel1(self, event):
+        if self.in_motion.t_tuple in self.tels.keys() \
+            and pround(event.x + self.x_coord, event.y + self.y_coord,
+                       self.elsize, True).t_tuple != self.in_motion.t_tuple:
+            self.tels[pround(event.x + self.x_coord, event.y + self.y_coord,
+                             self.elsize, True).t_tuple] = \
+                self.tels[self.in_motion.t_tuple]
+            self.tels.pop(self.in_motion.t_tuple)
+        self.in_motion = Pos(-1, -1)
+        self.shift = Pos(-1, -1)
+
+    def motion1(self, event):
+        self.newpos = Pos(event.x, event.y)
+
+    def update_node(self):
+        self.nodes.reset_nodes()
+        for oel in self.oels:
+            self.nodes.add_node(oel[0], oel[1])
+        for tel in self.tels:
+            if str(self.tels[tel]) == 'Wire':
+                pos_a = ttoposa(Pos(tel))
+                pos_b = ttoposb(Pos(tel))
+                self.nodes.add_node(pos_a.x_coord, pos_a.y_coord,
+                                    pos_b.x_coord, pos_b.y_coord)
+            else:
+                pos_a = ttoposa(Pos(tel))
+                pos_b = ttoposb(Pos(tel))
+                self.nodes.add_node(pos_a.x_coord, pos_a.y_coord)
+                self.nodes.add_node(pos_b.x_coord, pos_b.y_coord)
+
+    def calc_res(self):  # calc resistorers
+        self.update_node()
+        buffer = []
+        for tel in self.tels:
+            if str(self.tels[tel]) == 'Resistor':
+                pos_a = ttoposa(Pos(tel))
+                pos_b = ttoposb(Pos(tel))
+                pos_a = self.nodes.search_node(pos_a.x_coord, pos_a.y_coord)
+                pos_b = self.nodes.search_node(pos_b.x_coord, pos_b.y_coord)
+                self.tels[tel].node_a = pos_a
+                self.tels[tel].node_b = pos_b
+                buffer += [self.tels[tel]]
+        return buffer
+
+    def calc(self):
+        self.calc_res()
+        start = end = -1
+        for tel in self.tels.values():
+            tel.ph_u = None
+        for oel in self.oels:
+            if str(self.oels[oel]) == 'APin':
+                start = self.nodes.search_node(oel[0], oel[1])
+            if str(self.oels[oel]) == 'BPin':
+                end = self.nodes.search_node(oel[0], oel[1])
+        if start == -1 or end == -1:
+            if not self.auto.get():
+                messagebox.showerror('Error', 'NO PINS SPECIFIED')
+            self.crc = Primitive(math.inf)
+            return
+        crc = self.calc_res()
+        crc = self.nodes.interpret(crc, start, end)
+        if not self.auto.get():
+            messagebox.showinfo('Result', repr(crc))
+            messagebox.showinfo('Result', repr(crc.ph_r))
+        self.crc = crc
+        self.nodes.calc_voltages(crc, 'V' if self.powerv else 'A', self.power)
+
+    def new_sketch(self):
+        self.tels = {}
+        self.oels = {}
+
+    def count(self):
+        Resistor.resistor_i = 1
+        for tel in self.tels.values():
+            if str(tel) == 'Resistor':
+                tel.uid = Resistor.resistor_i
+                Resistor.resistor_i += 1
+
+    def zoom(self, inc):
+        self.x_coord += self.x_coord // self.elsize
+        self.y_coord += self.y_coord // self.elsize
+        self.elsize += inc
+
+    def interactive(self):
+        code.InteractiveConsole({'self': self}).interact()
+
+    def delete(self, x_coord, y_coord):
+        if pround(x_coord, y_coord, self.elsize, True).t_tuple \
+                in self.tels.keys():
+            del self.tels[pround(x_coord, y_coord, self.elsize, True).t_tuple]
+        if pround(x_coord, y_coord, self.elsize).o_tuple in self.oels.keys():
+            del self.oels[pround(x_coord, y_coord, self.elsize).o_tuple]
+
+    def onkey(self, event):
+        # print(ev, ev.state)
+        event.x += self.x_coord
+        event.y += self.y_coord
+        if len(event.keysym) > 1 and event.keysym[:1] == 'F':
+            i = int(event.keysym[1:]) - 1
+            gates = [Wire, Resistor, APin, BPin]
+            if len(gates) <= i:
+                messagebox.showerror(
+                    'Error', 'NO F' + str(i + 1) + ' ELEMENT')
+            else:
+                self.new(gates[i], event.x, event.y)
+        if event.keysym == 'Enter' or event.keysym == 'Return':
+            self.calc()
+        if event.keysym == 'backslash':
+            self.interactive()
+        if event.keysym == 'apostrophe' or event.keysym == 'quoteright':
+            self.count()
+        if (event.state & 1) != 0 and event.keysym == 'Delete':  # shift + del
+            self.new_sketch()
+        if event.keysym == 'plus':
+            self.zoom(+1)
+        if event.keysym == 'minus':
+            self.zoom(-1)
+        if event.keysym == 'Left':
+            self.x_coord -= 1
+        if event.keysym == 'Right':
+            self.x_coord += 1
+        if event.keysym == 'Up':
+            self.y_coord -= 1
+        if event.keysym == 'Down':
+            self.y_coord += 1
+        if event.keysym == 'Delete':
+            self.delete(event.x, event.y)
+        if pround(event.x, event.y, self.elsize, True).t_tuple in \
+                self.tels.keys():
+            self.tels[pround(event.x, event.y, self.elsize, True).t_tuple] \
+                .onkey(event)
+        if pround(event.x, event.y, self.elsize).o_tuple in self.oels.keys():
+            self.oels[pround(event.x, event.y, self.elsize).o_tuple] \
+                .onkey(event)
+        if event.keysym.upper() == 'S' and event.state == 0b100:  # Ctrl+S
+            self.save()
+        if event.keysym.upper() == 'S' and event.state == 0b101:  # Ctrl+Sh+S
+            self.save(-1)
+        if event.keysym.upper() == 'O' and event.state == 0b100:  # Ctrl+O
+            self.open()
+
+    def get_float(self, msg):
+        buffer = simpledialog.askfloat('Input', msg,
+                                       parent=self.tkroot, minvalue=0.0)
+        self.canvas.focus_set()
+        return buffer
+
 
 if __name__ == '__main__':
-  board = Board()
-  if len(argv) > 1:
-    board.open(argv[1])
-  if True:
+    board = Board()
+    if len(sys.argv) > 1:
+        board.open(sys.argv[1])
     while 1:
-      board = board.render()
+        board = board.render()
