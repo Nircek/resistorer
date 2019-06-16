@@ -27,8 +27,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
-from elements import Resistor
-
 UNITS = {'R': '\N{OHM SIGN}', 'U': 'V', 'I': 'A'}
 
 
@@ -44,11 +42,8 @@ class CanceledError(Exception):
 
 
 def input_resistance(uid, get_float):  # TODO: move it to BoardEditor
-    new_value = None
-    new_value = Resistor.old_r
     new_value = get_float(
         'Value of R' + str(uid) + ' [' + get_unit('R') + ']')
     if new_value is None:
         raise CanceledError
-    Resistor.old_r = new_value
     return new_value

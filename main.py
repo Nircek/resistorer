@@ -34,199 +34,10 @@ import math
 import pickle
 import sys
 
-from primitives import Primitive, Series, Parallel, Delta
+from primitives import Primitive
 from elements import TElement, OElement, APin, BPin, Wire, Resistor
 from board_editor import get_unit, CanceledError
-
-
-class Nodes:
-    def __init__(self):
-        self.nodes = {}
-        self.node_voltages = []
-
-    def reset_nodes(self):
-        self.nodes = []
-
-    def search_node(self, x_coord, y_coord):
-        for i, ele in enumerate(self.nodes):
-            if (x_coord, y_coord) in ele:
-                return i
-        return -1
-
-    def add_node(self, x_coord, y_coord, x2_coord=-1, y2_coord=-1):
-        print(self.nodes)
-        node_index = self.search_node(x_coord, y_coord)
-        node2_index = self.search_node(x2_coord, y2_coord)
-        print(node_index, node2_index)
-        new_index = -1
-        if node_index == -1 and node2_index == -1:
-            new_index = len(self.nodes)
-            self.nodes += [[]]
-        elif (node_index == -1) != (node2_index == -1):
-            new_index = node_index + node2_index + 1  # a or b
-        elif node_index != node2_index:
-            self.nodes[node_index] += self.nodes[node2_index]
-            del self.nodes[node2_index]
-            return
-        print(new_index)
-        if (x_coord, y_coord) not in self.nodes[new_index] and \
-                -1 not in (x_coord, y_coord):
-            self.nodes[new_index] += [(x_coord, y_coord)]
-        if (x2_coord, y2_coord) not in self.nodes[new_index] and \
-                -1 not in (x2_coord, y2_coord):
-            self.nodes[new_index] += [(x2_coord, y2_coord)]
-
-    def interpret(self, data, start, end):
-        # -----
-        def datasearch(node_a, node_b=-1):
-            '''look for all resistors connecting node_a and node_b'''
-            results = []
-            for i, connection in enumerate(data):
-                if connection.node_a == node_a:
-                    if node_b in (connection.node_b, -1):
-                        results += [i]
-                elif connection.node_b == node_a:
-                    if node_b in (connection.node_a, -1):
-                        results += [i]
-            return results
-
-        def other_side(index, known):
-            '''index of element connects known node and returned node'''
-            return data[index].node_a + data[index].node_b - known
-
-        def without(arr):
-            return list(map(lambda x: x[1],
-                            filter(lambda x: x[0] not in arr,
-                                   enumerate(arr))))
-
-        def process_delta():
-            for first_node in range(len(self.nodes)):
-                for first in datasearch(first_node):
-                    second_node = other_side(first, first_node)
-                    for second in datasearch(second_node):
-                        third_node = other_side(second, second_node)
-                        for third in datasearch(third_node):
-                            fourth_node = other_side(third, third_node)
-                            if fourth_node == first_node:
-                                ndata = without((first, second, third))
-                                delta_a = Delta(data[first], data[second],
-                                                data[third], 1)
-                                delta_b = Delta(data[first], data[second],
-                                                data[third], 2)
-                                delta_c = Delta(data[first], data[second],
-                                                data[third], 3)
-                                delta_a.node_a, delta_b.node_a, \
-                                    delta_c.node_a = first_node, third_node, \
-                                    second_node
-                                delta_a.node_b, delta_b.node_b, \
-                                    delta_c.node_b = [len(self.nodes)] * 3
-                                ndata += [delta_a, delta_b, delta_c]
-                                return ndata
-            return None
-
-        def process_series():
-            for node in range(len(self.nodes)):
-                if node not in (start, end):
-                    connections = datasearch(node)
-                    if len(connections) == 2:
-                        ndata = without(connections)
-                        series = Series(data[connections[0]],
-                                        data[connections[1]])
-                        series.node_a, series.node_b = \
-                            other_side(connections[0], node), \
-                            other_side(connections[1], node)
-                        ndata += [series]
-                        return ndata
-            return None
-
-        def process_parallel():
-            for index, connection in enumerate(data):
-                for index2, connection2 in enumerate(data):
-                    nodes_of_conn = connection.node_a, connection.node_b
-                    nodes_of_conn2 = connection2.node_a, connection2.node_b
-                    if index != index2 and nodes_of_conn in \
-                            (nodes_of_conn2, nodes_of_conn2[::-1]):
-                        ndata = without((index, index2))
-                        parallel = Parallel(connection, connection2)
-                        parallel.node_a, parallel.node_b = \
-                            connection.node_a, connection.node_b
-                        ndata += [parallel]
-                        return ndata
-            return None
-
-        def process_unnecessary():
-            removed = []
-            for node in range(len(self.nodes)):
-                if node not in (start, end):
-                    connections = datasearch(node)
-                    if len(connections) == 1:
-                        removed += connections
-            for connection_i, connection in enumerate(data):
-                if connection.node_a == connection.node_b:
-                    removed += [connection_i]
-            return without(removed) if removed else None
-        # -----
-        processors = [process_unnecessary, process_series,
-                      process_parallel, process_delta]
-        old_data = []
-        while old_data != data:
-            old_data = data[:]
-            # print(odata)
-            for processor in processors:
-                ndata = processor()
-                if ndata is not None:
-                    data = ndata
-                    if processor == process_delta:  # pylint: disable=W0143
-                        self.nodes += [[]]
-                    break
-        if not data:
-            if start == end:
-                return Primitive(0)
-            return Primitive(math.inf)
-        if len(data) == 1:
-            return data[0]
-        raise RuntimeError('Can\'t find a processor to simplify the circuit')
-
-    def calc_voltages(self, circuit, unit, amount):  # calced
-        if str(circuit) == 'Primitive':
-            return
-
-        def cv(whole, part):  # calc voltage(parent, data)
-            if str(part) == 'Primitive':
-                return None
-            buffer = False
-            for component in part.components:
-                buffer = cv(whole, component)
-            if (part.ph_u is not None) and \
-                    ((whole.node_voltages[part.node_a] is None)
-                     != (whole.node_voltages[part.node_b] is None)) and \
-                    part.node_a != circuit.node_b and \
-                    part.node_b != circuit.node_b:  # '!=' = 'xor'
-                if whole.node_voltages[part.node_a] is None:
-                    whole.node_voltages[part.node_a] = \
-                        whole.node_voltages[part.node_b] + part.ph_u
-                else:
-                    whole.node_voltages[part.node_b] = \
-                        whole.node_voltages[part.node_a] + part.ph_u
-                return True
-            if part.ph_u is None and \
-                None not in (whole.node_voltages[part.node_a],
-                             whole.node_voltages[part.node_b]):
-                part.ph_u = abs(whole.node_voltages[part.node_a]
-                                - whole.node_voltages[part.node_b])
-                return True
-            return buffer
-        self.node_voltages = [None] * len(self.nodes)
-        self.node_voltages[circuit.node_a] = 0
-        # nv[c.node_b] = u
-        if unit == 'V':
-            circuit.ph_u = amount
-        elif unit == 'A':
-            circuit.ph_i = amount
-        else:
-            raise RuntimeError(f'Not known unit "{unit}"" to calc.')
-        while cv(self, circuit):
-            pass
+from circuit_solver import Nodes
 
 
 class Pos:
@@ -295,8 +106,8 @@ class Board:
         self.tels = {}  # elements with (x, y, p)
         self.oels = {}  # elements with (x, y)
         self.tkroot = tk.Tk()
-        self.canvas = tk.Canvas(self.tkroot, width=WIDTH,
-                                height=HEIGHT, bd=0, highlightthickness=0)
+        self.canvas = tk.Canvas(self.tkroot, width=WIDTH, height=HEIGHT,
+                                bg='#ccc', bd=0, highlightthickness=0)
         self.aself = [self]
         self.make_tk()
         self.canvas.pack(expand=True)
@@ -314,6 +125,7 @@ class Board:
         self.power = 12
         self.crc = Primitive(math.inf)  # CiRCuit :D easy to remember
         self.stop = tk.BooleanVar()
+        self.last_calc = None, None
 
     def set_power(self, is_voltage, value):
         if value is None:
@@ -578,17 +390,20 @@ class Board:
                 buffer += [self.tels[tel]]
         return buffer
 
-    def calc(self):
+    def calc(self, force=False):
+        if self.last_calc == repr((self.tels, self.oels)) and not force:
+            return
+        self.last_calc = repr((self.tels, self.oels))
         self.calc_res()
         start = end = -1
         for tel in self.tels.values():
             tel.ph_u = None
-        for oel in self.oels:
-            if str(self.oels[oel]) == 'APin':
-                start = self.nodes.search_node(oel[0], oel[1])
-            if str(self.oels[oel]) == 'BPin':
-                end = self.nodes.search_node(oel[0], oel[1])
-        if start == -1 or end == -1:
+        for oeli, oel in self.oels.items():
+            if str(oel) == 'APin':
+                start = self.nodes.search_node(oeli[0], oeli[1])
+            if str(oel) == 'BPin':
+                end = self.nodes.search_node(oeli[0], oeli[1])
+        if -1 in (start, end):
             if not self.auto.get():
                 messagebox.showerror('Error', 'NO PINS SPECIFIED')
             self.crc = Primitive(math.inf)
@@ -628,7 +443,6 @@ class Board:
             del self.oels[pround(x_coord, y_coord, self.elsize).o_tuple]
 
     def onkey(self, event):
-        # print(ev, ev.state)
         event.x += self.x_coord
         event.y += self.y_coord
         if len(event.keysym) > 1 and event.keysym[:1] == 'F':

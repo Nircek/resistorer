@@ -73,24 +73,24 @@ class Pin(OElement):
 
     def render(self, x_coord, y_coord, size):
         radius = size * 0.1
-        self.parent.w.create_arc(
+        self.parent.canvas.create_arc(
             x_coord - radius, y_coord - radius,
             x_coord + radius, y_coord + radius,
             start=0, extent=180,
             outline=self.color, fill=self.color)
-        self.parent.w.create_arc(x_coord - radius, y_coord - radius,
-                                 x_coord + radius, y_coord + radius,
-                                 start=180, extent=180,
-                                 outline=self.color, fill=self.color)
+        self.parent.canvas.create_arc(x_coord - radius, y_coord - radius,
+                                      x_coord + radius, y_coord + radius,
+                                      start=180, extent=180,
+                                      outline=self.color, fill=self.color)
         radius *= 2
-        self.parent.w.create_arc(x_coord - radius, y_coord - radius,
-                                 x_coord + radius, y_coord + radius,
-                                 start=0, extent=180,
-                                 outline=self.color, style='arc')
-        self.parent.w.create_arc(x_coord - radius, y_coord - radius,
-                                 x_coord + radius, y_coord + radius,
-                                 start=180, extent=180,
-                                 outline=self.color, style='arc')
+        self.parent.canvas.create_arc(x_coord - radius, y_coord - radius,
+                                      x_coord + radius, y_coord + radius,
+                                      start=0, extent=180,
+                                      outline=self.color, style='arc')
+        self.parent.canvas.create_arc(x_coord - radius, y_coord - radius,
+                                      x_coord + radius, y_coord + radius,
+                                      start=180, extent=180,
+                                      outline=self.color, style='arc')
 
 
 class APin(Pin):
@@ -105,15 +105,15 @@ class BPin(Pin):
 
 class Wire(TElement):
     def render(self, x_coord, y_coord, size, position):
-        self.parent.w.create_line(x_coord, y_coord, x_coord if position == 1
-                                  else (x_coord + size),
-                                  y_coord if position == 0
-                                  else (y_coord + size))
+        self.parent.canvas.create_line(x_coord, y_coord,
+                                       x_coord if position == 1
+                                       else (x_coord + size),
+                                       y_coord if position == 0
+                                       else (y_coord + size))
 
 
 class Resistor(Primitive, TElement):
     resistor_i = 1
-    old_r = None
 
     def __init__(self, parent, uid=None):
         super().__init__(parent)
@@ -136,40 +136,40 @@ class Resistor(Primitive, TElement):
 
     def render(self, x_coord, y_coord, size, position):
         if position == 0:
-            self.parent.w.create_line(x_coord, y_coord,
-                                      x_coord + 0.25 * size, y_coord)
-            self.parent.w.create_line(x_coord + 0.75 * size, y_coord,
-                                      x_coord + size, y_coord)
-            self.parent.w.create_line(
+            self.parent.canvas.create_line(x_coord, y_coord,
+                                           x_coord + 0.25 * size, y_coord)
+            self.parent.canvas.create_line(x_coord + 0.75 * size, y_coord,
+                                           x_coord + size, y_coord)
+            self.parent.canvas.create_line(
                 x_coord + 0.25 * size, y_coord + 0.2 * size,
                 x_coord + 0.75 * size, y_coord + 0.2 * size)
-            self.parent.w.create_line(
+            self.parent.canvas.create_line(
                 x_coord + 0.25 * size, y_coord - 0.2 * size,
                 x_coord + 0.75 * size, y_coord - 0.2 * size)
-            self.parent.w.create_line(
+            self.parent.canvas.create_line(
                 x_coord + 0.25 * size, y_coord + 0.2 * size,
                 x_coord + 0.25 * size, y_coord - 0.2 * size)
-            self.parent.w.create_line(
+            self.parent.canvas.create_line(
                 x_coord + 0.75 * size, y_coord + 0.2 * size,
                 x_coord + 0.75 * size, y_coord - 0.2 * size)
-            self.parent.w.create_text(x_coord + 0.5 * size, y_coord,
-                                      text=str(self.uid))
+            self.parent.canvas.create_text(x_coord + 0.5 * size, y_coord,
+                                           text=str(self.uid))
         if position == 1:
-            self.parent.w.create_line(x_coord, y_coord,
-                                      x_coord, y_coord + 0.25 * size)
-            self.parent.w.create_line(x_coord, y_coord + 0.75 * size,
-                                      x_coord, y_coord + size)
-            self.parent.w.create_line(
+            self.parent.canvas.create_line(x_coord, y_coord,
+                                           x_coord, y_coord + 0.25 * size)
+            self.parent.canvas.create_line(x_coord, y_coord + 0.75 * size,
+                                           x_coord, y_coord + size)
+            self.parent.canvas.create_line(
                 x_coord + 0.2 * size, y_coord + 0.25 * size,
                 x_coord + 0.2 * size, y_coord + 0.75 * size)
-            self.parent.w.create_line(
+            self.parent.canvas.create_line(
                 x_coord - 0.2 * size, y_coord + 0.25 * size,
                 x_coord - 0.2 * size, y_coord + 0.75 * size)
-            self.parent.w.create_line(
+            self.parent.canvas.create_line(
                 x_coord + 0.2 * size, y_coord + 0.25 * size,
                 x_coord - 0.2 * size, y_coord + 0.25 * size)
-            self.parent.w.create_line(
+            self.parent.canvas.create_line(
                 x_coord + 0.2 * size, y_coord + 0.75 * size,
                 x_coord - 0.2 * size, y_coord + 0.75 * size)
-            self.parent.w.create_text(
+            self.parent.canvas.create_text(
                 x_coord, y_coord + 0.5 * size, text=str(self.uid), angle=270)
