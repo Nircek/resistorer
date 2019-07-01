@@ -122,7 +122,7 @@ class Resistor(Primitive, TElement):
             uid = Resistor.resistor_i
             Resistor.resistor_i += 1
         self.uid = uid
-        self.ph_r = input_resistance(uid, self.parent.get_float)
+        self.ph_r = input_resistance(uid, self.parent.input_float)
         self.ph_u = None
 
     @property

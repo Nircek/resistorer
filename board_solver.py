@@ -26,13 +26,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
-
-import sys
-from board import Board
-
-if __name__ == '__main__':
-    board = Board()
-    if len(sys.argv) > 1:
-        board.open(sys.argv[1])
-    while 1:
-        board = board.render()
