@@ -28,7 +28,6 @@ SOFTWARE.
 '''
 
 from primitives import Primitive
-from board_editor import input_resistance
 
 
 class Element:
@@ -122,7 +121,7 @@ class Resistor(Primitive, TElement):
             uid = Resistor.resistor_i
             Resistor.resistor_i += 1
         self.uid = uid
-        self.ph_r = input_resistance(uid, self.parent.input_float)
+        self.ph_r = self.parent.input_resistance(uid)
         self.ph_u = None
 
     @property
