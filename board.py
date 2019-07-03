@@ -53,7 +53,7 @@ class Board:
     def new_oel(self, element, pos):
         self.oels[pos] = element
 
-    def update_node(self):  # bs
+    def update_node(self):
         self.nodes.reset_nodes()
         for oel in self.oels:
             self.nodes.add_node(oel[0], oel[1])
@@ -69,7 +69,7 @@ class Board:
                 self.nodes.add_node(pos_a.x_coord, pos_a.y_coord)
                 self.nodes.add_node(pos_b.x_coord, pos_b.y_coord)
 
-    def calc_res(self):  # calc resistorers  # bs
+    def calc_res(self):  # calc resistorers
         self.update_node()
         buffer = []
         for tel in self.tels:
@@ -83,7 +83,7 @@ class Board:
                 buffer += [self.tels[tel]]
         return buffer
 
-    def calc(self, force=False):  # bs
+    def calc(self, force=False):
         if self.last_calc == repr((self.tels, self.oels)) and not force:
             raise NothingHappenedError
         self.last_calc = repr((self.tels, self.oels))
@@ -107,7 +107,7 @@ class Board:
         self.tels = {}
         self.oels = {}
 
-    def count(self):  # b
+    def count(self):
         Resistor.resistor_i = 1
         for tel in self.tels.values():
             if str(tel) == 'Resistor':
