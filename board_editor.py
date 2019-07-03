@@ -38,16 +38,7 @@ import pickle
 from elements import APin, BPin, Wire, Resistor, TElement, OElement
 from coords import Pos, pround
 from board import Board, NothingHappenedError, NoPinsError
-from primitives import Primitive
-
-UNITS = {'R': '\N{OHM SIGN}', 'U': 'V', 'I': 'A'}
-
-
-def get_unit(what):
-    '''get_unit translates the name of variable to corresponding unit of it'''
-    if what in UNITS:
-        return UNITS[what]
-    return ''
+from primitives import Primitive, get_unit
 
 
 class CanceledError(Exception):
@@ -135,7 +126,7 @@ class BoardEditor:
         edit_menu.add_command(
             label='Delete element',
             command=lambda: self.with_click(
-                lambda p: self.board.delete(p[0], p[1])),
+                lambda p: self.delete(p[0], p[1])),
             accelerator='Del')
         edit_menu.add_command(label='Delete all',
                               command=self.board.new_sketch,
@@ -174,6 +165,8 @@ class BoardEditor:
     def calc(self):
         try:
             self.crc = self.board.calc()
+            self.board.nodes.calc_voltages(
+                self.crc, 'V' if self.powerv else 'A', self.power)
         except NothingHappenedError:
             pass
         except NoPinsError:
@@ -256,7 +249,7 @@ class BoardEditor:
         self.tkroot.update_idletasks()
         self.tkroot.update()
         if self.auto.get():
-            self.board.calc()
+            self.calc()
         if self.newself:
             return self.newself
         return self
@@ -304,7 +297,7 @@ class BoardEditor:
             else:
                 self.new(gates[i], event.x, event.y)
         if event.keysym == 'Enter' or event.keysym == 'Return':
-            self.board.calc()
+            self.calc()
         if event.keysym == 'backslash':
             self.interactive()
         if event.keysym == 'apostrophe' or event.keysym == 'quoteright':
@@ -324,7 +317,7 @@ class BoardEditor:
         if event.keysym == 'Down':
             self.y_coord += 1
         if event.keysym == 'Delete':
-            self.board.delete(event.x, event.y)
+            self.delete(event.x, event.y)
         if pround(event.x, event.y, self.elsize, True).t_tuple in \
                 self.board.tels.keys():
             self.board.tels[
@@ -396,3 +389,7 @@ class BoardEditor:
                                                        self.elsize).o_tuple)
         except CanceledError:
             pass
+
+    def delete(self, x_coord, y_coord):
+        self.board.del_tel(pround(x_coord, y_coord, self.elsize, True).t_tuple)
+        self.board.del_oel(pround(x_coord, y_coord, self.elsize).o_tuple)

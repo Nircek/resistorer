@@ -28,11 +28,11 @@ SOFTWARE.
 '''
 
 import sys
-from board import Board
+from board_editor import BoardEditor
 
 if __name__ == '__main__':
-    board = Board()
+    board_editor = BoardEditor()
     if len(sys.argv) > 1:
-        board.open(sys.argv[1])
+        board_editor.open(sys.argv[1])
     while 1:
-        board = board.render()
+        board_editor = board_editor.render()

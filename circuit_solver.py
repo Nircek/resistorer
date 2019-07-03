@@ -29,8 +29,7 @@ SOFTWARE.
 
 from math import inf
 
-from primitives import Primitive, Series, Parallel, Delta
-from board_editor import get_unit
+from primitives import Primitive, Series, Parallel, Delta, get_unit
 
 
 class Nodes:

@@ -28,6 +28,16 @@ SOFTWARE.
 '''
 
 
+UNITS = {'R': '\N{OHM SIGN}', 'U': 'V', 'I': 'A'}
+
+
+def get_unit(what):
+    '''get_unit translates the name of variable to corresponding unit of it'''
+    if what in UNITS:
+        return UNITS[what]
+    return ''
+
+
 class Primitive:
     def __init__(self, r=None):
         if r is not None:

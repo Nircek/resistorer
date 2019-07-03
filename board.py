@@ -27,10 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
-
-import math
-
-from primitives import Primitive
+from elements import Resistor
 from circuit_solver import Nodes
 from coords import Pos, ttoposa, ttoposb
 
@@ -103,10 +100,8 @@ class Board:
             raise NoPinsError
         crc = self.calc_res()
         crc = self.nodes.interpret(crc, start, end)
-        print(crc)
-        print(crc.ph_r)
+        print(repr(crc), crc.ph_r)
         return crc
-        self.nodes.calc_voltages(crc, 'V' if self.powerv else 'A', self.power)
 
     def new_sketch(self):
         self.tels = {}
@@ -119,9 +114,10 @@ class Board:
                 tel.uid = Resistor.resistor_i
                 Resistor.resistor_i += 1
 
-    def delete(self, x_coord, y_coord):  # b
-        if pround(x_coord, y_coord, self.elsize, True).t_tuple \
-                in self.tels.keys():
-            del self.tels[pround(x_coord, y_coord, self.elsize, True).t_tuple]
-        if pround(x_coord, y_coord, self.elsize).o_tuple in self.oels.keys():
-            del self.oels[pround(x_coord, y_coord, self.elsize).o_tuple]
+    def del_tel(self, pos):
+        if pos in self.tels.keys():
+            del self.tels[pos]
+
+    def del_oel(self, pos):
+        if pos in self.oels.keys():
+            del self.oels[pos]

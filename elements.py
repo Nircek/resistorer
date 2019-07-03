@@ -64,11 +64,11 @@ class Pin(OElement):
         super().__init__(parent)
         self.color = color
         deleted = []
-        for oel in self.parent.oels:
-            if str(self.parent.oels[oel]) == str(self):
+        for oel in self.parent.board.oels:
+            if str(self.parent.board.oels[oel]) == str(self):
                 deleted += [oel]
         for oel in deleted:
-            del self.parent.oels[oel]
+            del self.parent.board.oels[oel]
 
     def render(self, x_coord, y_coord, size):
         radius = size * 0.1
