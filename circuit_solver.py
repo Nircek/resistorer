@@ -33,6 +33,9 @@ from primitives import Primitive, Series, Parallel, Delta, get_unit
 
 
 class Nodes:
+    '''Object holding info about all nodes (points or coords on the board which
+    are connected with Wire). It is useful to translate and simplify the board
+    into circuit made from Primitives.'''
     def __init__(self):
         self.nodes = {}
         self.node_voltages = []
@@ -40,15 +43,20 @@ class Nodes:
         self.start, self.end = (-1,) * 2
 
     def reset_nodes(self):
+        '''Deletes all known nodes.'''
         self.nodes = []
 
     def search_node(self, x_coord, y_coord):
+        '''Looks for the index of node which contains x_coord, y_coord.'''
         for i, ele in enumerate(self.nodes):
             if (x_coord, y_coord) in ele:
                 return i
         return -1
 
     def add_node(self, x_coord, y_coord, x2_coord=-1, y2_coord=-1):
+        '''Adds new node with a position x_coord, y_coord. There can be
+        specified x2_coord, y2_coord to connect new (or existing) first node
+        with new (or existing) second node.'''
         node_index = self.search_node(x_coord, y_coord)
         node2_index = self.search_node(x2_coord, y2_coord)
         new_index = -1
@@ -69,7 +77,7 @@ class Nodes:
             self.nodes[new_index] += [(x2_coord, y2_coord)]
 
     def datasearch(self, node_a, node_b=-1):
-        '''look for all resistors connecting node_a and node_b'''
+        '''Looks for all resistors connecting node_a and node_b.'''
         results = []
         for i, connection in enumerate(self.data):
             if connection.node_a == node_a:
@@ -81,15 +89,21 @@ class Nodes:
         return results
 
     def other_side(self, index, known):
-        '''index of element connects known node and returned node'''
+        '''Gets another node of element with an index.
+        param index (int) - index of element
+        param known (int) - index of known node which is connected to element
+        '''
         return self.data[index].node_a + self.data[index].node_b - known
 
     def without(self, arr):
+        '''Returns self.data without elements with indexes contained in arr'''
         return list(map(lambda x: x[1],
                         filter(lambda x: x[0] not in arr,
                                enumerate(self.data))))
 
     def process_delta(self):
+        '''Tries to find Delta connection in board and process (simplify and
+        remove old connections) it if present'''
         for first_node in range(len(self.nodes)):
             for first in self.datasearch(first_node):
                 second_node = self.other_side(first, first_node)
@@ -118,6 +132,8 @@ class Nodes:
         return None
 
     def process_series(self):
+        '''Tries to find Series connection in board and process (simplify and
+        remove old connections) it if present'''
         for node in range(len(self.nodes)):
             if node not in (self.start, self.end):
                 connections = self.datasearch(node)
@@ -133,6 +149,8 @@ class Nodes:
         return None
 
     def process_parallel(self):
+        '''Tries to find Parallel connection in board and process (simplify and
+        remove old connections) it if present'''
         for index, connection in enumerate(self.data):
             for index2, connection2 in enumerate(self.data):
                 nodes_of_conn = connection.node_a, connection.node_b
@@ -148,6 +166,8 @@ class Nodes:
         return None
 
     def process_unnecessary(self):
+        '''Tries to find unnecessary connections in board and process (remove
+        these connections) it if present'''
         removed = []
         for node in range(len(self.nodes)):
             if node not in (self.start, self.end):
@@ -163,6 +183,9 @@ class Nodes:
                   process_parallel, process_delta]
 
     def interpret(self, data, start, end):
+        '''Translate all data (Elements from board) to one circuit translation
+        (made from Primitives), assuming that voltage or current is connected
+        between start (int) and end (int) nodes'''
         self.data, self.start, self.end = data, start, end
         old_data = []
         while repr(old_data) != repr(data):
@@ -184,7 +207,11 @@ class Nodes:
         raise RuntimeError('Can\'t find a processor to simplify the circuit')
 
     def recursive_figure_voltage(self, circuit, part):
-        if str(part) == 'Primitive':
+        '''Try to calculate and set all voltage drops to Primitives
+        and Elements contained by circuit.
+        param circuit - whole circuit
+        param part - currently analysed part of circuit'''
+        if str(part) == 'Primitive':  # is Primitive has no voltage drop?
             return None
         buffer = False
         for component in part.components:
@@ -209,7 +236,12 @@ class Nodes:
             return True
         return buffer
 
-    def calc_voltages(self, circuit, unit, amount):  # calced
+    def calc_voltages(self, circuit, unit, amount):
+        '''Launcher of recursive_figure_voltage which is calculating all
+        voltage drops
+        param circuit - calculated circuit (made from Primitives)
+        param unit ('A' or 'V') - unit of power
+        param amount (int or float) - value of power'''
         if str(circuit) == 'Primitive':
             return
         self.node_voltages = [None] * len(self.nodes)
