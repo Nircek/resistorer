@@ -41,8 +41,8 @@ from board import Board, NothingHappenedError, NoPinsError
 from primitives import Primitive, get_unit
 
 
-class CanceledError(Exception):
-    '''User canceled the creating operation'''
+class CancelledError(Exception):
+    '''User cancelled the creating operation'''
 
 
 class BoardEditor:
@@ -54,6 +54,9 @@ class BoardEditor:
         self.tkroot = tk.Tk()
         self.canvas = tk.Canvas(self.tkroot, width=WIDTH, height=HEIGHT,
                                 bg='#ccc', bd=0, highlightthickness=0)
+        self.auto = tk.BooleanVar()
+        self.auto.set(True)
+        self.stop = tk.BooleanVar()
         self.make_tk()
         self.canvas.pack(expand=True)
         self.canvas.focus_set()
@@ -69,7 +72,6 @@ class BoardEditor:
         self.power = 12
         self.crc = Primitive(math.inf)  # CiRCuit :D easy to remember
         # but is it necessary?
-        self.stop = tk.BooleanVar()
 
     def set_power(self, is_voltage, value):
         '''Sets value of voltage or current for calculations between APin
@@ -158,8 +160,6 @@ class BoardEditor:
         debug_menu = tk.Menu(menu_bar, tearoff=0)
         debug_menu.add_command(label='Open a console',
                                command=self.interactive, accelerator='\\')
-        self.auto = tk.BooleanVar()
-        self.auto.set(True)
         debug_menu.add_checkbutton(label='Auto calculating', onvalue=True,
                                    offvalue=False, variable=self.auto)
         debug_menu.add_command(label='Calculate', command=self.calc,
@@ -172,7 +172,6 @@ class BoardEditor:
         '''Translates the circuit into primitives and set it to self.crc'''
         try:
             self.crc = self.board.calc()
-            assert self.powerv in ('V', 'A')
             self.board.nodes.calc_voltages(
                 self.crc, 'V' if self.powerv else 'A', self.power)
         except NothingHappenedError:
@@ -184,17 +183,20 @@ class BoardEditor:
 
     def dump(self):
         '''Returns bytes intepretation of the sketch'''
-        buffer = self.tkroot, self.canvas
+        buffer = self.tkroot, self.canvas, self.auto, self.stop
         del self.tkroot, self.canvas
+        self.auto, self.stop = self.auto.get(), self.stop.get()
         dumped = pickle.dumps(self)
-        self.tkroot, self.canvas = buffer
+        self.tkroot, self.canvas, self.auto, self.stop = buffer
         return dumped
 
     def load(self, data):
         '''Loads bytes interpretation of the sketch'''
-        buffer = self.tkroot, self.canvas
         loaded = pickle.loads(data)
-        loaded.tk, loaded.w = buffer
+        loaded.tkroot, loaded.canvas = self.tkroot, self.canvas
+        self.stop.set(loaded.stop)
+        self.auto.set(loaded.auto)
+        loaded.auto, loaded.stop = self.auto, self.stop
         loaded.make_tk()
         self.newself = loaded
 
@@ -375,7 +377,7 @@ class BoardEditor:
         new_value = self.input_float(
             'Value of R' + str(uid) + ' [' + get_unit('R') + ']')
         if new_value is None:
-            raise CanceledError
+            raise CancelledError
         return new_value
 
     def open(self, file=None):
@@ -433,7 +435,7 @@ class BoardEditor:
             if issubclass(_type, OElement):
                 self.board.new_oel(_type(self), pround(x_coord, y_coord,
                                                        self.elsize).o_tuple)
-        except CanceledError:
+        except CancelledError:
             pass
 
     def delete(self, x_coord, y_coord):

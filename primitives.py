@@ -44,6 +44,7 @@ class Primitive:
             self.ph_r = r
         self._ph_i, self._ph_u = None, None
         self.node_a, self.node_b = None, None
+        self.data = []
 
     def __repr__(self):
         return '[' + str(self.ph_r) + ']'
@@ -53,7 +54,7 @@ class Primitive:
 
     @property
     def components(self):
-        return []
+        return self.data
 
     @property
     def ph_i(self):
@@ -99,10 +100,6 @@ class Series(Primitive):
         return '+(' + ', '.join(map(repr, self.data)) + ')'
 
     @property
-    def components(self):
-        return self.data
-
-    @property
     def ph_r(self):
         return sum(map(lambda x: x.ph_r, self.data))
 
@@ -121,10 +118,6 @@ class Parallel(Primitive):
         return ':(' + ', '.join(map(repr, self.data)) + ')'
 
     @property
-    def components(self):
-        return self.data
-
-    @property
     def ph_r(self):
         return 1 / sum(map(lambda x: 1 / x.ph_r, self.data))
 
@@ -136,13 +129,13 @@ class Parallel(Primitive):
 class Delta(Primitive):
     def __init__(self, x, y, z, i):
         super().__init__()
-        self.components = [x, y, z]
+        self.data = [x, y, z]
         self.wiring_type = i
         self.ph_u = None
 
     def __repr__(self):
         return '\N{GREEK CAPITAL LETTER DELTA}(' + \
-               ', '.join(map(repr, self.components + self.wiring_type)) + ')'
+               ', '.join(map(repr, self.components + [self.wiring_type])) + ')'
 
     @property
     def ph_r(self):

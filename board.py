@@ -33,14 +33,16 @@ from coords import Pos, ttoposa, ttoposb
 
 
 class NoPinsError(Exception):
-    pass
+    '''There are no pins specified and no calculation can be made.'''
 
 
 class NothingHappenedError(Exception):
-    pass
+    '''Since the last calculation, input data hasn't changed
+    so the calculations are the same as the last time.'''
 
 
 class Board:
+    '''The object containg all data about the board and elements on it.'''
     def __init__(self):
         self.tels = {}  # elements with (x, y, p)
         self.oels = {}  # elements with (x, y)
@@ -48,12 +50,15 @@ class Board:
         self.last_calc = None, None
 
     def new_tel(self, element, pos):
+        '''Adds new TElement to board.'''
         self.tels[pos] = element
 
     def new_oel(self, element, pos):
+        '''Adds new OElement to board.'''
         self.oels[pos] = element
 
     def update_node(self):
+        '''Updates self.nodes object with current state of board.'''
         self.nodes.reset_nodes()
         for oel in self.oels:
             self.nodes.add_node(oel[0], oel[1])
@@ -70,6 +75,8 @@ class Board:
                 self.nodes.add_node(pos_b.x_coord, pos_b.y_coord)
 
     def calc_res(self):  # calc resistorers
+        '''Exports all resistors with simplified connections between them.
+        Connections can be accessed by .node_a and .node_b properties.'''
         self.update_node()
         buffer = []
         for tel in self.tels:
@@ -84,6 +91,7 @@ class Board:
         return buffer
 
     def calc(self, force=False):
+        '''Translate the board into the circuit (made from Primitives)'''
         if self.last_calc == repr((self.tels, self.oels)) and not force:
             raise NothingHappenedError
         self.last_calc = repr((self.tels, self.oels))
@@ -104,10 +112,12 @@ class Board:
         return crc
 
     def new_sketch(self):
+        '''Delete all elements from board.'''
         self.tels = {}
         self.oels = {}
 
     def count(self):
+        '''Recount all indexes of all resistors on the board.'''
         Resistor.resistor_i = 1
         for tel in self.tels.values():
             if str(tel) == 'Resistor':
@@ -115,9 +125,11 @@ class Board:
                 Resistor.resistor_i += 1
 
     def del_tel(self, pos):
+        '''Delete the TElement from board.'''
         if pos in self.tels.keys():
             del self.tels[pos]
 
     def del_oel(self, pos):
+        '''Delete the OElement from board.'''
         if pos in self.oels.keys():
             del self.oels[pos]
