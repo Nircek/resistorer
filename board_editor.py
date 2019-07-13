@@ -36,17 +36,17 @@ import sys
 import pickle
 
 from elements import APin, BPin, Wire, Resistor, TElement, OElement
-from coords import Pos, pround
+from coordinates import Pos, pround
 from board import Board, NothingHappenedError, NoPinsError
 from primitives import Primitive, get_unit
 
 
-class CancelledError(Exception):
-    '''User cancelled the creating operation'''
+class CanceledError(Exception):
+    '''User canceled the creating operation.'''
 
 
-class BoardEditor:
-    '''The editor of board, it has a tk window and a Board.'''
+class BoardEditor:  # pylint: disable=R0902
+    '''The editor of the Board, it has a tk window and a Board.'''
     def __init__(self, WIDTH=1280, HEIGHT=720, s=40):
         self.size = Pos(WIDTH, HEIGHT)
         self.elsize = s  # size of one element
@@ -74,30 +74,30 @@ class BoardEditor:
         # but is it necessary?
 
     def set_power(self, is_voltage, value):
-        '''Sets value of voltage or current for calculations between APin
+        '''Sets the value of voltage or current for calculations between APin
         and BPin.
 
-        param is_voltage (bool) - if True: sets voltage value
-                                  if False: sets current value
-        param value (int or float) - value in ampers or volts'''
+        param is_voltage (bool) - if True: sets the voltage value
+                                  if False: sets the current value
+        param value (int or float) - the value in ampers or volts'''
         if value is None:
             return
         self.powerv = is_voltage
         self.power = value
 
     def configure(self, event):
-        '''Handler of <Configure> event resizing the window'''
+        '''The handler of <Configure> event resizing the window.'''
         self.size.x_coord = event.width
         self.size.y_coord = event.height
         self.canvas.config(width=event.width, height=event.height)
 
     def make_tk(self):
-        '''Sets all the tk stuff'''
+        '''Sets all the tk stuff.'''
         self.tkroot.title('Resistorer')
-        self.canvas.bind('<Button 1>', self.onclick1)
-        self.canvas.bind('<ButtonRelease-1>', self.onrel1)
+        self.canvas.bind('<Button 1>', self.on_click1)
+        self.canvas.bind('<Buttonrelease-1>', self.on_rel1)
         self.canvas.bind('<B1-Motion>', self.motion1)
-        self.canvas.bind('<KeyPress>', self.onkey)
+        self.canvas.bind('<KeyPress>', self.on_key)
         self.tkroot.bind('<Configure>', self.configure)
         self.tkroot.protocol('WM_DELETE_WINDOW', lambda: self.stop.set(True))
         # -----
@@ -169,7 +169,7 @@ class BoardEditor:
         self.tkroot.config(menu=menu_bar)
 
     def calc(self):
-        '''Translates the circuit into primitives and set it to self.crc'''
+        '''Translates the circuit into Primitives and sets it to self.crc.'''
         try:
             self.crc = self.board.calc()
             self.board.nodes.calc_voltages(
@@ -182,7 +182,7 @@ class BoardEditor:
             self.crc = Primitive(math.inf)
 
     def dump(self):
-        '''Returns bytes intepretation of the sketch'''
+        '''Returns a bytes interpretation of the sketch.'''
         buffer = self.tkroot, self.canvas, self.auto, self.stop
         del self.tkroot, self.canvas
         self.auto, self.stop = self.auto.get(), self.stop.get()
@@ -191,7 +191,7 @@ class BoardEditor:
         return dumped
 
     def load(self, data):
-        '''Loads bytes interpretation of the sketch'''
+        '''Loads a bytes interpretation of the sketch.'''
         loaded = pickle.loads(data)
         loaded.tkroot, loaded.canvas = self.tkroot, self.canvas
         self.stop.set(loaded.stop)
@@ -201,14 +201,15 @@ class BoardEditor:
         self.newself = loaded
 
     def point(self, pos):
-        '''Makes a point at pos (Pos) on the canvas'''
+        '''Makes a point at pos (Pos) on the canvas.'''
         self.canvas.create_oval(pos.x_coord, pos.y_coord,
                                 pos.x_coord, pos.y_coord,
                                 width=1, fill='black')
 
-    def render(self):
-        '''Clears the canvas, draws the coord points, renders all elements,
-        writes info about resistors and circuit and handles tk events.
+    def render(self):  # pylint: disable=R0912
+        '''Clears the canvas, draws the coordinate points, renders all
+        elements, writes info about resistors and the circuit and handles tk
+        events.
         Returns self but this can be freshly loaded new self which should be
         treated as self and be updated so the best usage of this function is:
 
@@ -276,9 +277,9 @@ class BoardEditor:
             return self.newself
         return self
 
-    def onclick1(self, event):
-        '''Handles onclick events with primary mouse button.
-        Adds elements if some are in queue and moves elements on the board'''
+    def on_click1(self, event):
+        '''Handles on_click events with the primary mouse button. Adds Elements
+        if some are in the queue and moves Elements on the Board.'''
         if self.queue:
             self.queue[0]((event.x, event.y))
             self.queue = self.queue[1:]
@@ -290,9 +291,9 @@ class BoardEditor:
                          self.in_motion.y_coord * self.elsize)
         self.newpos = Pos(event.x, event.y)
 
-    def onrel1(self, event):
-        '''Handles onrelease event with primary mouse button.
-        Finishes moving elements on the board'''
+    def on_rel1(self, event):
+        '''Handles on_release events with the primary mouse button.
+        Finishes moving elements on the board.'''
         if self.in_motion.t_tuple in self.board.tels.keys() \
             and pround(event.x + self.x_coord, event.y + self.y_coord,
                        self.elsize, True).t_tuple != self.in_motion.t_tuple:
@@ -306,16 +307,16 @@ class BoardEditor:
         self.shift = Pos(-1, -1)
 
     def motion1(self, event):
-        '''Handles onmotion event with primary mouse button.
-        Drawing the animation of moving elements on the board'''
+        '''Handles on_motion events with the primary mouse button.
+        Draws the animation of moving elements on the board.'''
         self.newpos = Pos(event.x, event.y)
 
     def interactive(self):
-        '''Starts interactive console with self'''
+        '''Starts interactive console with self.'''
         code.InteractiveConsole({'self': self}).interact()
 
-    def onkey(self, event):
-        '''Handles onkey events'''
+    def on_key(self, event):  # pylint: disable=R0912
+        '''Handles on_key events.'''
         event.x += self.x_coord
         event.y += self.y_coord
         if len(event.keysym) > 1 and event.keysym[:1] == 'F':
@@ -352,11 +353,11 @@ class BoardEditor:
                 self.board.tels.keys():
             self.board.tels[
                 pround(event.x, event.y, self.elsize, True).t_tuple
-                ].onkey(event)
+                ].on_key(event)
         if pround(event.x, event.y, self.elsize).o_tuple in \
                 self.board.oels.keys():
             self.board.oels[pround(event.x, event.y, self.elsize).o_tuple] \
-                .onkey(event)
+                .on_key(event)
         if event.keysym.upper() == 'S' and event.state == 0b100:  # Ctrl+S
             self.save()
         if event.keysym.upper() == 'S' and event.state == 0b101:  # Ctrl+Sh+S
@@ -365,7 +366,7 @@ class BoardEditor:
             self.open()
 
     def input_float(self, msg):
-        '''Makes the tk dialog asking about a float value'''
+        '''Makes the tk dialog asking about a float value.'''
         buffer = simpledialog.askfloat('Input', msg,
                                        parent=self.tkroot, minvalue=0.0)
         self.canvas.focus_set()
@@ -373,15 +374,15 @@ class BoardEditor:
 
     def input_resistance(self, uid):
         '''Makes the tk dialog asking about a float value of resistor's
-        resistance'''
+        resistance.'''
         new_value = self.input_float(
             'Value of R' + str(uid) + ' [' + get_unit('R') + ']')
         if new_value is None:
-            raise CancelledError
+            raise CanceledError
         return new_value
 
     def open(self, file=None):
-        '''Opens a file with sketch interpratation and loads it
+        '''Opens a file with the sketch interpretation and loads it.
         param file (str) - file's path
                            if None: it makes a dialog asking about the path'''
         if file is None:
@@ -396,7 +397,7 @@ class BoardEditor:
         return True
 
     def save(self, file=None):
-        '''Saves a file with sketch interpretation
+        '''Saves a file with sketch interpretation.
         param file (str or -1) - file's path
                                  if None: makes a dialog asking about the path
                                           or takes the last used if present
@@ -415,18 +416,19 @@ class BoardEditor:
         return True
 
     def zoom(self, inc):
-        '''Zooms in or zooms out the sketch by inc
-        param inc (int or float) - the value of how much changes the size
+        '''Zooms in or zooms out the sketch by inc.
+        param inc (int or float) - the value of how much to change the size
                                    of one element on the board'''
         self.x_coord += self.x_coord // self.elsize
         self.y_coord += self.y_coord // self.elsize
         self.elsize += inc
 
     def new(self, _type, x_coord, y_coord):
-        '''Adds to board a new _type element on the x_coord and y_coord
+        '''Adds to board a new _type Element on the x_coord and y_coord.
         param _type (TElement or OElement) - type of new element
-        param x_coord, y_coord - coords of position where new element should be
-                                 placed, relative to (0, 0) pixel of windw'''
+        param x_coord, y_coord - the coordinates of the position where new
+                                 element should be placed,
+                                 relative to the (0, 0) pixel of the window'''
         try:
             if issubclass(_type, TElement):
                 self.board.new_tel(_type(self), pround(x_coord, y_coord,
@@ -435,12 +437,13 @@ class BoardEditor:
             if issubclass(_type, OElement):
                 self.board.new_oel(_type(self), pround(x_coord, y_coord,
                                                        self.elsize).o_tuple)
-        except CancelledError:
+        except CanceledError:
             pass
 
     def delete(self, x_coord, y_coord):
-        '''Deletes elements on x_coord and y_coord
-        param x_coord, y_coord - coords of elements which element should be
-                                 deleted, relative to (0, 0) pixel of window'''
+        '''Deletes elements on x_coord and y_coord.
+        param x_coord, y_coord - the coordinates of elements which should be
+                                 deleted,
+                                 relative to the (0, 0) pixel of the window'''
         self.board.del_tel(pround(x_coord, y_coord, self.elsize, True).t_tuple)
         self.board.del_oel(pround(x_coord, y_coord, self.elsize).o_tuple)

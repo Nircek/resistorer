@@ -32,7 +32,8 @@ UNITS = {'R': '\N{OHM SIGN}', 'U': 'V', 'I': 'A'}
 
 
 def get_unit(what):
-    '''get_unit translates the name of variable to corresponding unit of it'''
+    '''get_unit() translates the name of the variable to the corresponding unit
+    of it.'''
     if what in UNITS:
         return UNITS[what]
     return ''

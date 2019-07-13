@@ -49,15 +49,15 @@ class Element:
     def __repr__(self):
         return str(vars(self))
 
-    def onkey(self, event):
+    def on_key(self, event):
         '''Handles events of key presses.'''
 
 
 class OElement(Element):
-    '''One Element (oel). It is an Element which is sticked to one place.
-    It can be visualised like this:
+    '''One Element (oel). It is an Element which is stuck in one place.
+    It can be visualized like this:
     +--+--+
-    |  |  |   -|+ is a grid (+ is a coord point)
+    |  |  |   -|+ is a grid (+ is a coordinate point)
     +--X--+    X  is a position of OElement
     |  |  |       its position is (1, 1)
     +--+--+
@@ -67,12 +67,12 @@ class OElement(Element):
 
 
 class TElement(Element):
-    '''Two Element (tel). It is an Element which is sticked to two places.
-    But coords of it isn't represented like (x, y, x2, y2) but (x, y, pos).
-    X and y are one place and pos is an info is TElement set vertical (1)
-    or horizontal (0).
-    It can be visualised like this:
-    XXXX--+   -|+ is a grid (+ is a coord point)
+    '''Two Element (tel). It is an Element which is stuck bewtween two places.
+    But coordinates of it isn't represented like (x, y, x2, y2) but like
+    (x, y, pos). X and y are coordinates of one place and pos is info is
+    TElement set vertical (1) or horizontal (0).
+    It can be visualized like this:
+    XXXX--+   -|+ is a grid (+ is a coordinate point)
     |  |  |    X  is a position of TElement
     +--Y--+       its position is (0, 0, 0)
     |  Y  |    Y  is a position of TElement
@@ -83,7 +83,7 @@ class TElement(Element):
 
 
 class Pin(OElement):
-    '''It is an OElement which labels some coord with some color.'''
+    '''It is an OElement which labels some coordinate with some color.'''
     def __init__(self, parent, color='black'):
         super().__init__(parent)
         self.color = color
@@ -129,7 +129,7 @@ class BPin(Pin):
 
 
 class Wire(TElement):
-    '''It is an element which connects two coords in Board.'''
+    '''It is an element which connects two coordinates in Board.'''
     def render(self, x_coord, y_coord, size, position):
         self.parent.canvas.create_line(x_coord, y_coord,
                                        x_coord if position == 1
@@ -139,7 +139,7 @@ class Wire(TElement):
 
 
 class Resistor(Primitive, TElement):
-    '''It is an Resistor. It is TElement because it can be displayed (rendered)
+    '''It is a Resistor. It is TElement because it can be displayed (rendered)
     on the BoardEditor and it is a Primitive because it has its own specified
     resistance and can be a part of a circuit.'''
     resistor_i = 1

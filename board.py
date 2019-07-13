@@ -29,7 +29,7 @@ SOFTWARE.
 
 from elements import Resistor
 from circuit_solver import Nodes
-from coords import Pos, ttoposa, ttoposb
+from coordinates import Pos, ttoposa, ttoposb
 
 
 class NoPinsError(Exception):
@@ -42,7 +42,7 @@ class NothingHappenedError(Exception):
 
 
 class Board:
-    '''The object containg all data about the board and elements on it.'''
+    '''The object containing all data about the board and Elements on it.'''
     def __init__(self):
         self.tels = {}  # elements with (x, y, p)
         self.oels = {}  # elements with (x, y)
@@ -50,15 +50,15 @@ class Board:
         self.last_calc = None, None
 
     def new_tel(self, element, pos):
-        '''Adds new TElement to board.'''
+        '''Adds new TElement.'''
         self.tels[pos] = element
 
     def new_oel(self, element, pos):
-        '''Adds new OElement to board.'''
+        '''Adds new OElement.'''
         self.oels[pos] = element
 
     def update_node(self):
-        '''Updates self.nodes object with current state of board.'''
+        '''Updates self.nodes object with the current state.'''
         self.nodes.reset_nodes()
         for oel in self.oels:
             self.nodes.add_node(oel[0], oel[1])
@@ -75,7 +75,7 @@ class Board:
                 self.nodes.add_node(pos_b.x_coord, pos_b.y_coord)
 
     def calc_res(self):  # calc resistorers
-        '''Exports all resistors with simplified connections between them.
+        '''Exports all Resistors with simplified connections between them.
         Connections can be accessed by .node_a and .node_b properties.'''
         self.update_node()
         buffer = []
@@ -91,7 +91,7 @@ class Board:
         return buffer
 
     def calc(self, force=False):
-        '''Translate the board into the circuit (made from Primitives)'''
+        '''Translates into the circuit (made from Primitives).'''
         if self.last_calc == repr((self.tels, self.oels)) and not force:
             raise NothingHappenedError
         self.last_calc = repr((self.tels, self.oels))
@@ -112,12 +112,12 @@ class Board:
         return crc
 
     def new_sketch(self):
-        '''Delete all elements from board.'''
+        '''Deletes all Elements.'''
         self.tels = {}
         self.oels = {}
 
     def count(self):
-        '''Recount all indexes of all resistors on the board.'''
+        '''Recounts all indexes of all Resistors.'''
         Resistor.resistor_i = 1
         for tel in self.tels.values():
             if str(tel) == 'Resistor':
@@ -125,11 +125,11 @@ class Board:
                 Resistor.resistor_i += 1
 
     def del_tel(self, pos):
-        '''Delete the TElement from board.'''
+        '''Deletes the TElement.'''
         if pos in self.tels.keys():
             del self.tels[pos]
 
     def del_oel(self, pos):
-        '''Delete the OElement from board.'''
+        '''Deletes the OElement.'''
         if pos in self.oels.keys():
             del self.oels[pos]
