@@ -29,6 +29,8 @@ SOFTWARE.
 
 
 class Pos:
+    '''It contains info about some coord on the BoardEditor.
+    It can be a coord of OElement  or Telement.'''
     def __init__(self, *a):
         while len(a) == 1:
             a = a[0]
@@ -41,10 +43,12 @@ class Pos:
 
     @property
     def t_tuple(self):
+        '''Gets tuple with coords of TElement.'''
         return (self.x_coord, self.y_coord, self.orient)
 
     @property
     def o_tuple(self):
+        '''Gets tuple with coords of OElement.'''
         return (self.x_coord, self.y_coord)
 
     @t_tuple.setter
@@ -60,16 +64,21 @@ class Pos:
                 repr(self.o_tuple if self.orient == -1 else self.t_tuple)
 
 
-def ttoposa(tel):  # tel (two element) to pos A
+def ttoposa(tel):
+    '''Gets the first place (Pos) which is connected by tel (TElement).'''
     return Pos(tel.x_coord, tel.y_coord)
 
 
 def ttoposb(tel):
+    '''Gets the second place (Pos) which is connected by tel (TElement).'''
     return Pos(tel.x_coord + 1, tel.y_coord) if tel.orient == 0 else \
-           Pos(tel.x_coord, tel.y_coord + 1)
+        Pos(tel.x_coord, tel.y_coord + 1)
 
 
 def pround(x_coord, y_coord, size, is_tel=False):
+    '''Translates coords from the window of BoardEditor (in pixels) to Pos.
+    It bases on size of each element and on is_tel which defines will it return
+    position of TElement or not.'''
     if is_tel:
         x_coord /= size
         y_coord /= size

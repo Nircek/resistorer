@@ -32,7 +32,7 @@ from primitives import Primitive
 
 class Element:
     '''The basic element. It is an object having Tk as a parent. This is
-    the parent of every circuit-related object viewing on the BoardEditor.'''
+    the parent of every circuit-related object displayed on the BoardEditor.'''
     def __str__(self):
         return self.__class__.__name__
 
@@ -54,7 +54,7 @@ class Element:
 
 
 class OElement(Element):
-    '''One Element. It is an Element which is sticked to one place.
+    '''One Element (oel). It is an Element which is sticked to one place.
     It can be visualised like this:
     +--+--+
     |  |  |   -|+ is a grid (+ is a coord point)
@@ -67,7 +67,7 @@ class OElement(Element):
 
 
 class TElement(Element):
-    '''Two Element. It is an Element which is sticked to two places.
+    '''Two Element (tel). It is an Element which is sticked to two places.
     But coords of it isn't represented like (x, y, x2, y2) but (x, y, pos).
     X and y are one place and pos is an info is TElement set vertical (1)
     or horizontal (0).
