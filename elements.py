@@ -31,6 +31,8 @@ from primitives import Primitive
 
 
 class Element:
+    '''The basic element. It is an object having Tk as a parent. This is
+    the parent of every circuit-related object viewing on the BoardEditor.'''
     def __str__(self):
         return self.__class__.__name__
 
@@ -40,26 +42,48 @@ class Element:
 
     @property
     def info(self):
+        '''Returns the properties of Element. It is used when properties
+        are rendered in BoardEditor.'''
         return {}
 
     def __repr__(self):
         return str(vars(self))
 
     def onkey(self, event):
-        pass
+        '''Handles events of key presses.'''
 
 
 class OElement(Element):
+    '''One Element. It is an Element which is sticked to one place.
+    It can be visualised like this:
+    +--+--+
+    |  |  |   -|+ is a grid (+ is a coord point)
+    +--X--+    X  is a position of OElement
+    |  |  |       its position is (1, 1)
+    +--+--+
+    '''
     def render(self, x_coord, y_coord, size):
-        pass
+        '''Renders OElement on the BoardEditor'''
 
 
 class TElement(Element):
+    '''Two Element. It is an Element which is sticked to two places.
+    But coords of it isn't represented like (x, y, x2, y2) but (x, y, pos).
+    X and y are one place and pos is an info is TElement set vertical (1)
+    or horizontal (0).
+    It can be visualised like this:
+    XXXX--+   -|+ is a grid (+ is a coord point)
+    |  |  |    X  is a position of TElement
+    +--Y--+       its position is (0, 0, 0)
+    |  Y  |    Y  is a position of TElement
+    +--Y--+       its position is (1, 1, 1)
+    '''
     def render(self, x_coord, y_coord, size, position):
-        pass
+        '''Renders TElement on the BoardEditor'''
 
 
 class Pin(OElement):
+    '''It is an OElement which labels some coord with some color.'''
     def __init__(self, parent, color='black'):
         super().__init__(parent)
         self.color = color
@@ -93,16 +117,19 @@ class Pin(OElement):
 
 
 class APin(Pin):
-    def __init__(self, parent):
-        super().__init__(parent, 'blue')
-
-
-class BPin(Pin):
+    '''It is a red Pin which represents a '+' power supply.'''
     def __init__(self, parent):
         super().__init__(parent, 'red')
 
 
+class BPin(Pin):
+    '''It is a blue Pin which represents a '-' power supply.'''
+    def __init__(self, parent):
+        super().__init__(parent, 'blue')
+
+
 class Wire(TElement):
+    '''It is an element which connects two coords in Board.'''
     def render(self, x_coord, y_coord, size, position):
         self.parent.canvas.create_line(x_coord, y_coord,
                                        x_coord if position == 1
@@ -112,6 +139,9 @@ class Wire(TElement):
 
 
 class Resistor(Primitive, TElement):
+    '''It is an Resistor. It is TElement because it can be displayed (rendered)
+    on the BoardEditor and it is a Primitive because it has its own specified
+    resistance and can be a part of a circuit.'''
     resistor_i = 1
 
     def __init__(self, parent, uid=None):

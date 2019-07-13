@@ -120,7 +120,7 @@ class BoardEditor:
         edit_menu = tk.Menu(menu_bar, tearoff=0)
 
         def add_el(_type):
-            return lambda: self.queue.push(
+            return lambda: self.queue.append(
                 lambda p: self.new(_type, p[0], p[1]))  # add element
         edit_menu.add_command(label='Add a wire', command=add_el(Wire),
                               accelerator='F1')
