@@ -32,14 +32,15 @@ UNITS = {'R': '\N{OHM SIGN}', 'U': 'V', 'I': 'A'}
 
 
 def get_unit(what):
-    '''get_unit() translates the name of the variable to the corresponding unit
-    of it.'''
+    '''Translates the name of the variable to the corresponding unit of it.'''
     if what in UNITS:
         return UNITS[what]
     return ''
 
 
 class Primitive:
+    '''The base class for all things that have resistance and there can be
+    connected some voltage or current to it.'''
     def __init__(self, r=None):
         if r is not None:
             self.ph_r = r
@@ -55,20 +56,24 @@ class Primitive:
 
     @property
     def components(self):
+        '''The variable containing all dependent components.'''
         return self.data
 
     @property
     def ph_i(self):
+        '''The value of current (in amperes) that flows through.'''
         return self._ph_i
 
     @property
     def ph_u(self):
+        '''The value of voltage (in volts) that is connected.'''
         return self._ph_u
 
     def update_r(self):
-        pass
+        '''Updates some info about subcomponents.'''
 
     def clear_iu(self):
+        '''Clears current and voltage assigned.'''
         self._ph_i = None
         self._ph_u = None
 
@@ -92,6 +97,8 @@ class Primitive:
 
 
 class Series(Primitive):
+    '''The container for Primitives that simulates the components are connected
+    in series.'''
     def __init__(self, *args):
         super().__init__()
         self.data = args
@@ -102,6 +109,7 @@ class Series(Primitive):
 
     @property
     def ph_r(self):
+        '''The total resistance of the series circuit.'''
         return sum(map(lambda x: x.ph_r, self.data))
 
     def update_r(self):
@@ -110,6 +118,8 @@ class Series(Primitive):
 
 
 class Parallel(Primitive):
+    '''The container for Primitives that simulates the components are connected
+    in parallel.'''
     def __init__(self, *args):
         super().__init__()
         self.data = args
@@ -120,6 +130,7 @@ class Parallel(Primitive):
 
     @property
     def ph_r(self):
+        '''The total resistance of the parallel circuit.'''
         return 1 / sum(map(lambda x: 1 / x.ph_r, self.data))
 
     def update_r(self):
@@ -128,6 +139,23 @@ class Parallel(Primitive):
 
 
 class Delta(Primitive):
+    '''The container for Primitives that simulates the components which are
+    connected in delta. Such connection can be translated into 3 Delta
+    containers with different wiring_type parameter.
+    The example:
+    when we have a circuit in Board and board.calc_res_bis() command returns:
+    [(0, {1}, 1), (1, {2}, 2), (1, {3}, 3), (0, {4}, 3), (3, {5}, 2)]
+    and voltage is connected between 0. and 2. node of this circuit,
+    the simplified circuit representation is:
+    +(Δ({1}, {3}, {4}, 1),
+    :(+({2}, Δ({1}, {3}, {4}, 3)), +({5}, Δ({1}, {3}, {4}, 2))))
+    because a delta connection was translated into:
+    [(2, {2}, 1), (3, {5}, 1),
+    (0, Δ({1}, {3}, {4}, 1), 4),
+    (3, Δ({1}, {3}, {4}, 2), 4),
+    (2, Δ({1}, {3}, {4}, 3), 4)]
+    more info: https://en.wikipedia.org/wiki/Y-%CE%94_transform
+    '''
     def __init__(self, x, y, z, i):
         super().__init__()
         self.data = [x, y, z]
@@ -140,6 +168,8 @@ class Delta(Primitive):
 
     @property
     def ph_r(self):
+        '''The resistance of the corresponding resistor (with a wiring_type)
+        in the delta circuit.'''
         return {
             1: self.components[0].ph_r * self.components[1].ph_r,
             2: self.components[0].ph_r * self.components[2].ph_r,

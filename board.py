@@ -90,6 +90,13 @@ class Board:
                 buffer += [self.tels[tel]]
         return buffer
 
+    def calc_res_bis(self, data=None):
+        '''Exports all Resistors with simplified connections between them.
+        Connections are represented in 0. and 2. items of tuple.'''
+        if data is None:
+            data = self.calc_res()
+        return [(x.node_a, x, x.node_b) for x in data]
+
     def calc(self, force=False):
         '''Translates into the circuit (made from Primitives).'''
         if self.last_calc == repr((self.tels, self.oels)) and not force:

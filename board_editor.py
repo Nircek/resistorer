@@ -95,7 +95,7 @@ class BoardEditor:  # pylint: disable=R0902
         '''Sets all the tk stuff.'''
         self.tkroot.title('Resistorer')
         self.canvas.bind('<Button 1>', self.on_click1)
-        self.canvas.bind('<Buttonrelease-1>', self.on_rel1)
+        self.canvas.bind('<ButtonRelease-1>', self.on_rel1)
         self.canvas.bind('<B1-Motion>', self.motion1)
         self.canvas.bind('<KeyPress>', self.on_key)
         self.tkroot.bind('<Configure>', self.configure)
