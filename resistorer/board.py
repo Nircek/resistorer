@@ -27,9 +27,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
-from elements import Resistor
-from circuit_solver import Nodes
-from coordinates import Pos, ttoposa, ttoposb
+from .elements import Resistor
+from .circuit_solver import Nodes
+from .coordinates import Pos, ttoposa, ttoposb
 
 
 class NoPinsError(Exception):

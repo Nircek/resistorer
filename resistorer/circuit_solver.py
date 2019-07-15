@@ -29,7 +29,7 @@ SOFTWARE.
 
 from math import inf
 
-from primitives import Primitive, Series, Parallel, Delta, get_unit
+from .primitives import Primitive, Series, Parallel, Delta, get_unit
 
 
 class Nodes:

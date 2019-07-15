@@ -35,10 +35,10 @@ import tkinter as tk
 import sys
 import pickle
 
-from elements import APin, BPin, Wire, Resistor, TElement, OElement
-from coordinates import Pos, pround
-from board import Board, NothingHappenedError, NoPinsError
-from primitives import Primitive, get_unit
+from .elements import APin, BPin, Wire, Resistor, TElement, OElement
+from .coordinates import Pos, pround
+from .board import Board, NothingHappenedError, NoPinsError
+from .primitives import Primitive, get_unit
 
 
 class CanceledError(Exception):

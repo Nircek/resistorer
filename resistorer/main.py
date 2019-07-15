@@ -28,7 +28,7 @@ SOFTWARE.
 '''
 
 import sys
-from board_editor import BoardEditor
+from .board_editor import BoardEditor
 
 if __name__ == '__main__':
     board_editor = BoardEditor()
