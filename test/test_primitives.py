@@ -2,6 +2,7 @@
 resistorer/primitives test file
 '''
 from math import inf
+from fractions import Fraction
 import pytest
 
 from str_holder import StrHolder
@@ -84,3 +85,26 @@ def test_all_derivered_from_primitive_has_own_str(sub):
             .add(str(sub(*([None]*4))))
     else:
         TEST_ALL_DERIVERED_FROM_PRIMITIVE_HAS_OWN_STR_HOLDER.add(str(sub()))
+
+
+def test_advanced_calculation_with_fractions():
+    '''Calculation of the case described in primitives.Delta doc should be
+    good.'''
+    r_1 = prims.Primitive(Fraction(1))
+    r_2 = prims.Primitive(Fraction(2))
+    r_3 = prims.Primitive(Fraction(3))
+    r_4 = prims.Primitive(Fraction(4))
+    r_5 = prims.Primitive(Fraction(5))
+    r_z = prims.Series(
+        prims.Delta(r_1, r_3, r_4, 1),
+        prims.Parallel(prims.Series(r_2,
+                                    prims.Delta(r_1, r_3, r_4, 3)),
+                       prims.Series(r_5,
+                                    prims.Delta(r_1, r_3, r_4, 2))))
+    assert repr(r_z) == "+(Δ([1], [3], [4], 1), :(+([2], Δ([1], [3], [4], 3))"\
+                        ", +([5], Δ([1], [3], [4], 2))))"
+    assert str(r_z) == "Series"
+    assert r_z.ph_r == Fraction(181, 72)
+    r_z.ph_i = Fraction(1)
+    assert r_2.ph_u == Fraction(11, 9)
+    assert r_5.ph_u == Fraction(35, 18)
